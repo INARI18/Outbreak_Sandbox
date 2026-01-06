@@ -1,0 +1,112 @@
+{
+  "viruses": [
+    {
+      "id": "wannacry",
+      "name": "WannaCry",
+      "type": "ransomware",
+      "description": "Ransomware that exploited a Windows SMB vulnerability, causing global chaos in 2017",
+      "characteristics": {
+        "attack_power": 8,
+        "speed": 9,
+        "stealth": 3,
+        "mutation_rate": 2,
+        "target_priority": "spread_fast",
+        "behavior": "Attacks indiscriminately any vulnerable system. Prioritizes rapid, massive spread over caution. Doesn't care about being detected - speed is everything."
+      },
+      "exploit": "EternalBlue (MS17-010 SMB vulnerability)",
+      "year": 2017,
+      "impact": "global",
+      "vulnerability_window": "wide"
+    },
+    {
+      "id": "stuxnet",
+      "name": "Stuxnet",
+      "type": "worm",
+      "description": "Extremely sophisticated worm developed to sabotage Iran's nuclear program",
+      "characteristics": {
+        "attack_power": 10,
+        "speed": 3,
+        "stealth": 10,
+        "mutation_rate": 8,
+        "target_priority": "critical_infrastructure",
+        "behavior": "Extremely selective and patient. Completely ignores non-critical targets. Hides for long periods and uses multiple evasion techniques. Attacks only when it finds the perfect target (specific industrial systems)."
+      },
+      "exploit": "Multiple zero-days (4 different)",
+      "year": 2010,
+      "impact": "targeted",
+      "vulnerability_window": "narrow"
+    },
+    {
+      "id": "mirai",
+      "name": "Mirai",
+      "type": "botnet",
+      "description": "Massive botnet that infected millions of IoT devices using default passwords",
+      "characteristics": {
+        "attack_power": 5,
+        "speed": 10,
+        "stealth": 2,
+        "mutation_rate": 4,
+        "target_priority": "weak_credentials",
+        "behavior": "Massive brute-force attack. Tries default passwords on any device it finds. Extremely high volume of simultaneous attempts. Doesn't care about sophisticated defenses - it only seeks weak, unprotected targets."
+      },
+      "exploit": "Default/weak passwords on IoT devices",
+      "year": 2016,
+      "impact": "global",
+      "vulnerability_window": "wide"
+    },
+    {
+      "id": "conficker",
+      "name": "Conficker",
+      "type": "worm",
+      "description": "Polymorphic worm that infected millions of computers, creating a resilient botnet",
+      "characteristics": {
+        "attack_power": 7,
+        "speed": 6,
+        "stealth": 7,
+        "mutation_rate": 9,
+        "target_priority": "balanced_spread",
+        "behavior": "Highly adaptable. Uses multiple attack vectors simultaneously. Constantly mutates to avoid detection and removal. Balances speed with discretion - not the fastest nor the stealthiest, but the hardest to eradicate."
+      },
+      "exploit": "MS08-067 + USB drives + network shares + weak passwords",
+      "year": 2008,
+      "impact": "global",
+      "vulnerability_window": "wide"
+    },
+    {
+      "id": "notpetya",
+      "name": "NotPetya",
+      "type": "ransomware",
+      "description": "Destructive malware disguised as ransomware, causing billions in damage",
+      "characteristics": {
+        "attack_power": 9,
+        "speed": 8,
+        "stealth": 4,
+        "mutation_rate": 3,
+        "target_priority": "corporate_networks",
+        "behavior": "Aggressive and destructive. Focuses on corporate networks. Uses stolen credentials to propagate laterally. Prioritizes maximum damage over persistence - infects quickly and permanently destroys data."
+      },
+      "exploit": "EternalBlue + Mimikatz (credential theft)",
+      "year": 2017,
+      "impact": "corporate",
+      "vulnerability_window": "medium"
+    },
+    {
+      "id": "agent_btz",
+      "name": "Agent.BTZ",
+      "type": "worm",
+      "description": "Worm that infected classified military networks via USB drives",
+      "characteristics": {
+        "attack_power": 6,
+        "speed": 4,
+        "stealth": 9,
+        "mutation_rate": 5,
+        "target_priority": "air_gapped_systems",
+        "behavior": "Patient and persistent. Specialized in crossing air-gaps (systems isolated from the internet). Propagates slowly via physical media. Avoids detection at all costs - can remain dormant for months. Collects information discreetly before moving."
+      },
+      "exploit": "USB autorun + social engineering",
+      "year": 2008,
+      "impact": "military",
+      "vulnerability_window": "narrow"
+    }
+  ]
+}

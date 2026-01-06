@@ -1,0 +1,40 @@
+{
+  "node_types": [
+    {
+      "id": "iot_device",
+      "name": "IoT Device",
+      "description": "Smart cameras, sensors, and bulbs. Firmware rarely updated, default passwords.",
+      "security_level": 0.1
+    },
+    {
+      "id": "legacy_system",
+      "name": "Legacy System",
+      "description": "Old servers running discontinued OS. No longer receives security patches.",
+      "security_level": 0.2
+    },
+    {
+      "id": "home_pc",
+      "name": "Home PC",
+      "description": "Personal computer. May have free antivirus, but user is prone to clicking suspicious links.",
+      "security_level": 0.4
+    },
+    {
+      "id": "corp_workstation",
+      "name": "Corporate Workstation",
+      "description": "IT-managed computer. Has EDR, Firewall, and blocking policies.",
+      "security_level": 0.7
+    },
+    {
+      "id": "cloud_server",
+      "name": "Cloud Server",
+      "description": "Modern infrastructure, hardened Linux, restricted SSH key access.",
+      "security_level": 0.85
+    },
+    {
+      "id": "mainframe",
+      "name": "Banking Mainframe",
+      "description": "Isolated critical systems with multiple layers of physical and logical authentication.",
+      "security_level": 0.95
+    }
+  ]
+}
