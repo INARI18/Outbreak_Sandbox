@@ -1,0 +1,53 @@
+The virus is evaluating its recent performance.
+
+Current characteristics:
+- Attack power: {virus[attack]}
+- Spread rate: {virus[spread]}
+- Stealth: {virus[stealth]}
+- Mutation rate: {virus[mutation_rate]}
+- Behavior: {virus[behavior]}
+
+Metrics summary:
+{metrics}
+
+Recent attempts:
+{recent_attempts}
+
+Task:
+Decide whether the virus should mutate based on recent failures.
+If the virus is failing due to "incompatible_host", you SHOULD add a new target host (e.g. from 'pc' to 'iot').
+
+Rules:
+- Mutation is OPTIONAL
+- If mutating, change ONE stat (Attack OR Speed OR Stealth) by a small amount (max ±2.0)
+- OR add a new target host type if needed.
+- Do NOT change everything at once.
+
+Return ONLY valid JSON:
+
+If no mutation:
+{
+  "mutate": false,
+  "reason": "Current strategy is working fine."
+}
+
+If mutation:
+{
+  "mutate": true,
+  "type": "stat_boost" | "adaptation",
+  "target_parameter": "attack_power" | "spread_rate" | "stealth" | "target_hosts",
+  "change_value": 0.5 (for stats) or "iot_device" (for adaptation),
+  "reason": "Increasing attack to overcome high defense."
+}
+}
+
+If mutation:
+{
+  "mutate": true,
+  "changes": {
+    "attack": <float>,
+    "spread": <float>,
+    "stealth": <float>
+  },
+  "reason": "<short explanation>"
+}

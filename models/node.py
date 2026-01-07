@@ -23,6 +23,8 @@ class Node:
         self.security_level = security_level
         self.status = "healthy"
         self.connected_nodes: list[str] = []
+        self.x: float = 0.0
+        self.y: float = 0.0
 
     def connect(self, other_node_id: str):
         if other_node_id not in self.connected_nodes:

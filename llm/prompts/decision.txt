@@ -1,0 +1,30 @@
+You are a malware propagation intelligence.
+
+Simulation step: {step}
+
+Virus:
+- Name: {virus[name]}
+- Attack power: {virus[attack]}
+- Spread rate: {virus[spread]}
+- Stealth: {virus[stealth]}
+- Mutation rate: {virus[mutation_rate]}
+- Behavior: {virus[behavior]}
+- Exploit: {virus[exploit]}
+- Impact: {virus[impact]}
+
+Network state:
+- Infected nodes: {network[infected_nodes]}
+- Healthy nodes: {network[healthy_nodes]}
+
+Adjacency (neighbors for each node):
+{network[adjacency_text]}
+
+Task:
+Choose ONE infected node and ONE connected healthy node to attempt infection. You MUST ensure the target node is directly connected (a neighbor) of the chosen source node.
+
+Respond ONLY in JSON:
+{{
+  "source_node": "<id>",
+  "target_node": "<id>",
+  "reasoning": "<short explanation>"
+}}
