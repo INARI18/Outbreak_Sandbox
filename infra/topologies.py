@@ -106,6 +106,84 @@ def topology_hub(node_count: int, hubs: int = 1, **_) -> nx.Graph:
     return G
 
 
+def topology_tree(node_count: int, **_) -> nx.Graph:
+    """Generate a tree topology with node_count nodes.
+
+    Uses networkx.random_tree to generate a spanning tree with the requested
+    number of nodes, then relabels to 0..n-1.
+    """
+    if node_count <= 0:
+        return nx.empty_graph(max(0, node_count))
+    if node_count == 1:
+        return nx.empty_graph(1)
+
+    # Prefer using networkx.random_tree when available (returns exactly n nodes).
+    # This produces a random spanning tree. Fall back to a balanced tree trimmed
+    # to the requested size if random_tree is not present.
+    if node_count <= 2:
+        return topology_star(node_count)
+
+    # Try to call networkx.random_tree if available (API differs across nx versions)
+    rand_tree_fn = getattr(nx, "random_tree", None)
+    if rand_tree_fn is None:
+        # some networkx versions expose it under generators.trees.random_tree
+        try:
+            from networkx.generators.trees import random_tree as _rt
+            rand_tree_fn = _rt
+        except Exception:
+            rand_tree_fn = None
+
+    if rand_tree_fn is not None:
+        try:
+            G = rand_tree_fn(node_count)
+            return _relabel_to_ints(G)
+        except Exception:
+            # If random_tree fails for any reason, fall through to balanced approach
+            pass
+
+    # Balanced binary tree fallback (may produce more nodes than requested)
+    b = 2
+    h = 0
+    while (b ** (h + 1) - 1) // (b - 1) < node_count:
+        h += 1
+
+    G = nx.balanced_tree(b, h)
+
+    # Trim the balanced tree to exactly `node_count` nodes by removing leaves
+    # from the deepest level first to preserve overall balance.
+    # Work on a copy so we don't mutate the original generator result unexpectedly.
+    working = G.copy()
+
+    # choose a root deterministically (0 should be root for balanced_tree)
+    root = list(working.nodes())[0] if working.number_of_nodes() > 0 else None
+
+    while working.number_of_nodes() > node_count:
+        # compute depths from root
+        try:
+            depths = nx.single_source_shortest_path_length(working, root)
+        except Exception:
+            # fallback: arbitrary depths via BFS
+            depths = {}
+            for i, n in enumerate(working.nodes()):
+                depths[n] = i
+
+        # find leaves (degree == 1) excluding root
+        leaves = [n for n in working.nodes() if working.degree(n) == 1 and n != root]
+        if not leaves:
+            break
+
+        # sort leaves by depth descending (remove deepest leaves first)
+        leaves.sort(key=lambda n: depths.get(n, 0), reverse=True)
+
+        # remove as many as needed in this pass
+        to_remove = min(len(leaves), working.number_of_nodes() - node_count)
+        for rem in leaves[:to_remove]:
+            working.remove_node(rem)
+
+    # Finally relabel remaining nodes to 0..n-1
+    return _relabel_to_ints(working)
+
+
 TOPOLOGY_MAP: Dict[str, Callable[..., nx.Graph]] = {
     "random": topology_random,
     "ring": topology_ring,
@@ -113,6 +191,7 @@ TOPOLOGY_MAP: Dict[str, Callable[..., nx.Graph]] = {
     "mesh": topology_mesh,
     "grid": topology_grid,
     "hub": topology_hub,
+    "tree": topology_tree,
 }
 
 

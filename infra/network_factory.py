@@ -68,6 +68,8 @@ def graph_to_network(
 
     # Ensure deterministic ordering of nodes (use sorted by current labels)
     nodes = list(G.nodes())
+    
+    pos = nx.spring_layout(G, scale=1.0, seed=42)
 
     # Create Node objects
     for idx, n in enumerate(nodes):
@@ -78,6 +80,12 @@ def graph_to_network(
             node_type=config["type"],
             security_level=config["sec"],
         )
+        
+        # Assign position
+        if n in pos:
+            node.x = float(pos[n][0])
+            node.y = float(pos[n][1])
+
         network.add_node(node)
         
     original_to_str = {orig: str(i) for i, orig in enumerate(nodes)}
