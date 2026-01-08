@@ -21,6 +21,7 @@ from infra.llm.groq_client import GroqClient
 from infra.llm.mock_client import MockClient
 from llm.interface import LLMInterface
 import os
+import keyring
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -38,7 +39,6 @@ class MainWindow(QMainWindow):
         self.stack = QStackedWidget()
         layout.addWidget(self.stack)
 
-        # create screens
         self.screens = {}
         self.screens['welcome'] = WelcomeScreen()
         self.screens['home'] = HomeScreen()
@@ -50,13 +50,11 @@ class MainWindow(QMainWindow):
 
         for key, widget in self.screens.items():
             self.stack.addWidget(widget)
-            # connect navigation
             widget.next_requested.connect(lambda k=key: self.on_next(k))
             widget.back_requested.connect(lambda k=key: self.on_back(k))
             if hasattr(widget, 'dashboard_requested'):
                 widget.dashboard_requested.connect(lambda: self.show_screen('home'))
 
-        # start on welcome
         self.show_screen('welcome')
 
     def show_screen(self, key: str):
@@ -65,13 +63,11 @@ class MainWindow(QMainWindow):
             self.stack.setCurrentWidget(widget)
 
     def on_next(self, current_key: str):
-        # Correct Order: Topology -> Virus -> Config -> Execute
         order = ['welcome', 'home', 'topology', 'virus', 'config', 'execute', 'history']
         try:
             idx = order.index(current_key)
             next_key = order[min(idx + 1, len(order) - 1)]
             
-            # Hook: If entering execution, initialize engine
             if next_key == 'execute':
                 self.initialize_simulation()
             
@@ -90,11 +86,9 @@ class MainWindow(QMainWindow):
 
     def initialize_simulation(self):
         print("Initializing Simulation...")
-        # 1. Topology (read selection from Topology screen)
         topo_screen = self.screens.get('topology')
         topology_key = getattr(topo_screen, 'get_selected_topology', lambda: 'random')()
         node_count = getattr(topo_screen, 'get_node_count', lambda: 30)()
-        # Using the user selected settings
         try:
             G = create_topology(topology_key, int(node_count))
         except KeyError:
@@ -103,15 +97,12 @@ class MainWindow(QMainWindow):
 
         network = graph_to_network(G)
         
-        # 2. Virus
-        # Ensure we are looking in the project root
-        project_root = os.getcwd() # Assumption: running from root
+        project_root = os.getcwd() 
         virus_path = os.path.join(project_root, "viruses.json")
         
         try:
             repo = VirusRepository(virus_path)
             viruses = repo.load_all()
-            # Check user selection
             v_screen = self.screens.get('virus')
             selected_name = None
             if v_screen and hasattr(v_screen, 'get_selected_virus_name'):
@@ -130,13 +121,21 @@ class MainWindow(QMainWindow):
             virus = None
         
         if not virus:
-            # Fallback mockup virus if file missing
             from models.virus import Virus
             virus = Virus("Unknown Pathogen", 0.5, 0.2, 0.1, 0.1, "Aggressive")
 
-        # 3. LLM: prefer real client but fallback to mock if not configured or on error
-        # support both GROQ_API_KEY (explicit) and API_KEY (common .env variable used by GroqClient)
+        # 3. LLM Configuration
+        # Priority:
+        # 1. Environment Variable (.env)
+        # 2. System Keyring (saved via UI)
         api_key = os.getenv("GROQ_API_KEY") or os.getenv("API_KEY")
+        
+        if not api_key:
+            try:
+                api_key = keyring.get_password("outbreak_sandbox", "groq_api_key")
+            except Exception:
+                pass
+
         client = None
         if api_key:
             try:
@@ -151,8 +150,6 @@ class MainWindow(QMainWindow):
 
         llm_interface = LLMInterface(client)
         
-        # 4. Engine
-        # Configure Deterministic Policy based on UI
         config_screen = self.screens.get('config')
         if config_screen:
             mode = getattr(config_screen, 'get_mode', lambda: 'stochastic')()
@@ -166,7 +163,6 @@ class MainWindow(QMainWindow):
 
         engine = SimulationEngine(network, virus)
         engine.attach_llm(llm_interface)
-        # Infect an initial patient-zero so the simulation can start spreading
         
         if network.nodes:
             first_node_id = DeterministicPolicy.get().choice(list(network.nodes.keys()))
@@ -174,5 +170,4 @@ class MainWindow(QMainWindow):
             if node:
                 node.infect()
         
-        # 5. Pass to screen
         self.screens['execute'].set_engine(engine)

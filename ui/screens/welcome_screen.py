@@ -36,7 +36,7 @@ class ApiKeyDialog(QDialog):
         layout.addWidget(info)
 
         self.input = QLineEdit()
-        self.input.setPlaceholderText("gsk_...")
+        self.input.setPlaceholderText("your_api_key_here...")
         self.input.setEchoMode(QLineEdit.Password)
         
         # Load existing key
@@ -50,6 +50,18 @@ class ApiKeyDialog(QDialog):
         layout.addWidget(self.input)
 
         btn_layout = QHBoxLayout()
+        
+        delete_btn = QPushButton("Delete")
+        delete_btn.setCursor(Qt.PointingHandCursor)
+        delete_btn.setStyleSheet("""
+            QPushButton {
+                background: transparent; border: 1px solid #ef4444; color: #ef4444; 
+                border-radius: 8px; padding: 8px 16px; font-weight: bold;
+            }
+            QPushButton:hover { background: #fef2f2; }
+        """)
+        delete_btn.clicked.connect(self.delete_key)
+
         cancel_btn = QPushButton("Cancel")
         cancel_btn.setCursor(Qt.PointingHandCursor)
         cancel_btn.setStyleSheet("""
@@ -69,10 +81,21 @@ class ApiKeyDialog(QDialog):
         """)
         save_btn.clicked.connect(self.save_key)
 
+        btn_layout.addWidget(delete_btn)
         btn_layout.addStretch()
         btn_layout.addWidget(cancel_btn)
         btn_layout.addWidget(save_btn)
         layout.addLayout(btn_layout)
+
+    def delete_key(self):
+        try:
+            keyring.delete_password("outbreak_sandbox", "groq_api_key")
+            self.input.clear()
+            QMessageBox.information(self, "Success", "API Key removed.")
+            self.accept()
+        except Exception:
+            # keyring throws error if password not found, which is fine
+            QMessageBox.information(self, "Info", "No key found to delete.")
 
     def save_key(self):
         key = self.input.text().strip()

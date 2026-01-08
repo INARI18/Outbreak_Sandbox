@@ -13,11 +13,6 @@ from simulation.mutation import (
 
 
 class SimulationEngine:
-    """
-    Engine determinística.
-    Não decide ações — apenas executa decisões externas (LLM).
-    """
-
     def __init__(
         self,
         network: Network,
@@ -35,13 +30,11 @@ class SimulationEngine:
 
     def attach_llm(self, llm_interface):
         self.llm = llm_interface
-        # Initialize mutation strategy if LLM is attached
         if llm_interface:
              from simulation.llm_mutation_strategy import LLMMutationStrategy
              self.mutation_strategy = LLMMutationStrategy(llm_interface)
 
     def _take_snapshot(self):
-        """Captures the current state of all nodes."""
         nodes_state = []
         infected_count = 0
         quarantined_count = 0
@@ -70,19 +63,11 @@ class SimulationEngine:
             "nodes_snapshot": nodes_state
         })
 
-    # =========================
-    # LOOP PRINCIPAL
-    # =========================
     def run(self, llm_interface):
-        """
-        Executa a simulação chamando a LLM a cada step.
-        """
-
         if self.current_step == 0:
             self._take_snapshot()
 
         while True:
-            # Centralized stop-condition checks
             should_stop, reason = check_stop(self)
             if should_stop:
                 print(f"Stopping simulation: {reason}")
@@ -95,7 +80,6 @@ class SimulationEngine:
                 metrics=self.metrics
             )
 
-            # Falha explícita da LLM
             if not decision or "error" in decision:
                 print(f"[STEP {self.current_step}] LLM decision failed:", decision)
                 break
@@ -114,12 +98,12 @@ class SimulationEngine:
 
 
     # =========================
-    # STEP ÚNICO
+    # SINGLE STEP
     # =========================
     def step(self, source_node_id=None, target_node_id=None, strategy: str = "exploit") -> dict:
         """
-        Executa um único passo da simulação.
-        Se source/target não forem fornecidos, consulta a LLM anexada.
+        Executes a single simulation step.
+        If source/target are not provided, consults the attached LLM.
         """
         if source_node_id is None and target_node_id is None:
             if not self.llm:
@@ -165,7 +149,7 @@ class SimulationEngine:
 
     def _execute_primitive_step(self, source_node_id: str, target_node_id: str, strategy: str = "exploit") -> dict:
         """
-        Lógica interna de execução do passo (sem decidir nada).
+        Internal step execution logic (without decision making).
         """
         source = self.network.get_node(source_node_id)
         target = self.network.get_node(target_node_id)
@@ -179,7 +163,7 @@ class SimulationEngine:
             "error": None
         }
 
-        # ========= VALIDAÇÕES =========
+        # ========= VALIDATIONS =========
 
         if not source:
             step_result["error"] = "invalid_source_node"
@@ -201,7 +185,7 @@ class SimulationEngine:
             step_result["error"] = "target_already_infected"
             return step_result
 
-        # ========= EXECUÇÃO =========
+        # ========= EXECUTION =========
 
         attempt = self.try_infect(target, strategy)
         step_result["attempt"] = attempt
@@ -210,7 +194,7 @@ class SimulationEngine:
         # or maybe try_infect handles it? Let's check try_infect
         # Ah, try_infect below calls metrics.record_attempt. We need to enable it.
         
-        # ========= MUTAÇÃO =========
+        # ========= MUTATION =========
 
         if MutationTrigger.should_mutate(self.virus):
             # print(f"🧬 MUTATION TRIGGERED at Step {self.current_step}")
@@ -223,7 +207,7 @@ class SimulationEngine:
         
     def try_mutate(self):
          """
-         Executa mutação baseada em métricas recentes.
+         Executes mutation based on recent metrics.
          Uses the assigned strategy to determine the new characteristics.
          """
          # Create context wrapper including metrics object
@@ -240,20 +224,20 @@ class SimulationEngine:
              self.virus.mutate(new_chars)
              # print(f"   🧬 Virus mutated! Stats: Atk={new_chars.attack_power:.1f} Stl={new_chars.stealth:.1f} Targets={new_chars.target_hosts}")
 
-    # INFECÇÃO
+    # INFECTION
     # =========================
     def try_infect(self, node: Node, strategy: str) -> dict:
         """
-        Tenta infectar um nó alvo usando o sistema de propagação.
-        Se falhar e for detectado, o nó aumenta sua defesa.
+        Attempts to infect a target node using the propagation system.
+        If it fails and is detected, the node increases its defense.
         """
         result = PropagationSystem.attempt_infection(self.virus, node, strategy)
         
-        # Defensive Reaction (Punição por Barulho)
-        # Se falhou e foi detectado, o Admin corrige a falha (aumenta segurança)
+        # Defensive Reaction (Punishment for Noise)
+        # If failed and detected, the Admin fixes the flaw (increases security)
         if not result["success"] and result.get("detected", False):
             old_sec = node.security_level
-            # Aumenta defesa em 15% (limitado a 0.99)
+            # Increases defense by 15% (capped at 0.99)
             new_sec = min(0.99, old_sec + 0.15)
             node.security_level = new_sec
             

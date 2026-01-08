@@ -8,29 +8,10 @@ from llm.prompt_context import (
 
 
 class LLMInterface:
-    """
-    Interface única entre a simulação e a LLM.
-
-    Regras:
-    - A engine NUNCA acessa client, prompt, parser ou formatter
-    - A LLM decide, a engine executa
-    """
-
     def __init__(self, client):
         self.client = client
 
-    # ==========================================================
-    # CONTRATO DA ENGINE
-    # ==========================================================
     def decide(self, step, network, virus, metrics):
-        """
-        Método exigido pela SimulationEngine.
-
-        Retorna:
-        - (source_node_id, target_node_id) se houver decisão válida
-        - None em caso de erro ou decisão inválida
-        """
-
         result = self.decide_spread(step, network, virus, metrics)
 
         if "error" in result:
@@ -38,15 +19,7 @@ class LLMInterface:
 
         return result["source_node"], result["target_node"]
 
-    # ==========================================================
-    # DECISÃO DE ESPALHAMENTO
-    # ==========================================================
     def decide_spread(self, step, network, virus, metrics) -> dict:
-        """
-        Consulta a LLM para decidir qual nó infectado
-        tenta infectar qual vizinho.
-        """
-
         context = build_decision_context(
             step=step,
             network=network,
@@ -118,12 +91,12 @@ class LLMInterface:
         }
 
     # ==========================================================
-    # DECISÃO DE MUTAÇÃO
+    # MUTATION DECISION
     # ==========================================================
     def decide_mutation(self, virus, metrics):
         """
-        Consulta a LLM para decidir se o vírus deve mutar
-        e quais características alterar.
+        Consults the LLM to decide if the virus should mutate
+        and which characteristics to alter.
         """
 
         context = build_mutation_context(

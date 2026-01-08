@@ -6,20 +6,20 @@ class Network:
         id: str,
         topology: str,
         size: int,
-        security_level: float = 0.0 # Mantido apenas para compatibilidade de assinatura, mas ignorado
+        security_level: float = 0.0 # Kept only for signature compatibility, but ignored
     ):
         self.id = id
         self.topology = topology
         self.size = size
-        # self.security_level removido daqui, agora é calculado dinamicamente
+        # self.security_level removed from here, now calculated dynamically
         self.nodes: dict[str, Node] = {}
 
     @property
     def security_level(self) -> float:
         """
-        Calcula o nível de segurança atual da rede dinamicamente.
-        Nós infectados contribuem com 0.0 de segurança.
-        Nós saudáveis contribuem com seu nível de defesa atual (que pode subir com patches).
+        Dynamically calculates the current network security level.
+        Infected nodes contribute 0.0 security.
+        Healthy nodes contribute their current defense level (which might increase with patches).
         """
         if not self.nodes:
             return 0.0

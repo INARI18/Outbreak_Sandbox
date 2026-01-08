@@ -8,7 +8,6 @@ from .main_window import MainWindow
 
 
 def main():
-    # Load environment variables from .env early so other modules can read them
     try:
         load_dotenv()
     except Exception:
@@ -16,7 +15,6 @@ def main():
     
     app = QApplication(sys.argv)
 
-    # Try to load custom fonts dropped into ui/assets/fonts/
     fonts_dir = os.path.join(os.path.dirname(__file__), "assets", "fonts")
     if os.path.isdir(fonts_dir):
         for fname in os.listdir(fonts_dir):
@@ -25,15 +23,12 @@ def main():
                 try:
                     QFontDatabase.addApplicationFont(path)
                 except Exception:
-                    # ignore font load failures; keep going
                     pass
 
-    # Set application icon if available
     icon_path = os.path.join(os.path.dirname(__file__), "assets", "icons", "app_icon.png")
     if os.path.exists(icon_path):
         app.setWindowIcon(QIcon(icon_path))
 
-    # Richer app-wide stylesheet (uses loaded fonts if available)
     app.setStyleSheet("""
     /* Basic layout */
     QMainWindow { background: #f8fafc; } /* slate-50 */
