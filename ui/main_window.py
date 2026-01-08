@@ -11,17 +11,7 @@ from ui.screens.simulation_execution import SimulationExecutionDashboardScreen
 from ui.screens.history_screen import SimulationHistoryProfilesScreen
 
 # Simulation Logic
-from models.network import Network
-from infra.topologies import create_topology
-from infra.network_factory import graph_to_network
-from simulation.engine import SimulationEngine
-from simulation.deterministic_policy import DeterministicPolicy
-from infra.repositories.virus_repository import VirusRepository
-from infra.llm.groq_client import GroqClient
-from infra.llm.mock_client import MockClient
-from llm.interface import LLMInterface
-import os
-import keyring
+from infra.factories import SimulationFactory
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -54,6 +44,8 @@ class MainWindow(QMainWindow):
             widget.back_requested.connect(lambda k=key: self.on_back(k))
             if hasattr(widget, 'dashboard_requested'):
                 widget.dashboard_requested.connect(lambda: self.show_screen('home'))
+            if hasattr(widget, 'history_requested'):
+                widget.history_requested.connect(lambda: self.show_screen('history'))
 
         self.show_screen('welcome')
 
@@ -85,89 +77,31 @@ class MainWindow(QMainWindow):
             self.show_screen('welcome')
 
     def initialize_simulation(self):
-        print("Initializing Simulation...")
+        print("Initializing Simulation via Factory...")
+        
+        # 1. Gather Parameters from UI
         topo_screen = self.screens.get('topology')
-        topology_key = getattr(topo_screen, 'get_selected_topology', lambda: 'random')()
-        node_count = getattr(topo_screen, 'get_node_count', lambda: 30)()
-        try:
-            G = create_topology(topology_key, int(node_count))
-        except KeyError:
-            print(f"Unknown topology '{topology_key}', falling back to 'random'.")
-            G = create_topology('random', int(node_count))
-
-        network = graph_to_network(G)
-        
-        project_root = os.getcwd() 
-        virus_path = os.path.join(project_root, "viruses.json")
-        
-        try:
-            repo = VirusRepository(virus_path)
-            viruses = repo.load_all()
-            v_screen = self.screens.get('virus')
-            selected_name = None
-            if v_screen and hasattr(v_screen, 'get_selected_virus_name'):
-                selected_name = v_screen.get_selected_virus_name()
-
-            virus = None
-            if selected_name and viruses:
-                for v in viruses:
-                    if v.name == selected_name:
-                        virus = v
-                        break
-            if not virus:
-                virus = viruses[0] if viruses else None
-        except Exception as e:
-            print(f"Error loading viruses: {e}")
-            virus = None
-        
-        if not virus:
-            from models.virus import Virus
-            virus = Virus("Unknown Pathogen", 0.5, 0.2, 0.1, 0.1, "Aggressive")
-
-        # 3. LLM Configuration
-        # Priority:
-        # 1. Environment Variable (.env)
-        # 2. System Keyring (saved via UI)
-        api_key = os.getenv("GROQ_API_KEY") or os.getenv("API_KEY")
-        
-        if not api_key:
-            try:
-                api_key = keyring.get_password("outbreak_sandbox", "groq_api_key")
-            except Exception:
-                pass
-
-        client = None
-        if api_key:
-            try:
-                client = GroqClient(api_key)
-                print("Using Real Groq Client")
-            except Exception as e:
-                print("GroqClient init failed, falling back to MockClient:", e)
-                client = MockClient()
-        else:
-            print("GROQ_API_KEY not set; using MockClient")
-            client = MockClient()
-
-        llm_interface = LLMInterface(client)
-        
+        virus_screen = self.screens.get('virus')
         config_screen = self.screens.get('config')
-        if config_screen:
-            mode = getattr(config_screen, 'get_mode', lambda: 'stochastic')()
-            if mode == 'deterministic':
-                seed_val = getattr(config_screen, 'get_seed', lambda: '12345')()
-                DeterministicPolicy.get().configure(seed_val)
-                print(f"Policy configured: DETERMINISTIC (Seed: {seed_val})")
-            else:
-                DeterministicPolicy.get().configure(None)
-                print("Policy configured: STOCHASTIC")
 
-        engine = SimulationEngine(network, virus)
-        engine.attach_llm(llm_interface)
+        topology_key = getattr(topo_screen, 'get_selected_topology', lambda: 'random')()
+        node_count = int(getattr(topo_screen, 'get_node_count', lambda: 30)())
         
-        if network.nodes:
-            first_node_id = DeterministicPolicy.get().choice(list(network.nodes.keys()))
-            node = network.get_node(first_node_id)
-            if node:
-                node.infect()
+        selected_virus_name = None
+        if virus_screen and hasattr(virus_screen, 'get_selected_virus_name'):
+            selected_virus_name = virus_screen.get_selected_virus_name()
+
+        mode = getattr(config_screen, 'get_mode', lambda: 'stochastic')()
+        seed_val = getattr(config_screen, 'get_seed', lambda: '12345')()
+
+        # 2. Build Engine using Factory
+        # encapsulates complexity of network creation, virus loading, and LLM setup
+        engine = SimulationFactory.build_engine(
+            topology_key=topology_key,
+            node_count=node_count,
+            virus_name=selected_virus_name,
+            execution_mode=mode,
+            seed=seed_val
+        )
         
         self.screens['execute'].set_engine(engine)

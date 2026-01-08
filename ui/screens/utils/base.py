@@ -2,10 +2,9 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QWidget, QLabel, QFrame, QPushButton
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QFont
 
-# --- Helpers ---
+# Helpers
 
 def create_icon(name: str, size: int = 24, color: str = "#475569") -> QLabel:
-    """Creates a text-based icon using Material Symbols Outlined font (returned as QLabel widget)."""
     lbl = QLabel(name)
     lbl.setProperty("class", "icon")
     lbl.setStyleSheet(f"font-size: {size}px; color: {color}; font-family: 'Material Symbols Outlined';")
@@ -13,8 +12,6 @@ def create_icon(name: str, size: int = 24, color: str = "#475569") -> QLabel:
     return lbl
 
 def create_pixmap(name: str, size: int = 24, color: str = "#475569") -> QPixmap:
-    """Creates a QPixmap from a font icon."""
-    # Scale for high DPI if needed, but keeping simple for now
     pix = QPixmap(size, size)
     pix.fill(Qt.transparent)
     
@@ -37,6 +34,7 @@ def create_qicon(name: str, size: int = 24, color: str = "#475569") -> QIcon:
 def create_card() -> QFrame:
     f = QFrame()
     f.setObjectName("card")
+    f.setStyleSheet("QFrame#card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; }")
     return f
 
 class NativeBase(QWidget):

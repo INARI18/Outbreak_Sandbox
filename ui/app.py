@@ -120,7 +120,6 @@ def main():
     w = MainWindow()
     w.show()
 
-    # If running in headless/offscreen mode, quit shortly after start so tests don't hang.
     platform = os.environ.get("QT_QPA_PLATFORM", "")
     if platform == "offscreen":
         QTimer.singleShot(1000, app.quit)

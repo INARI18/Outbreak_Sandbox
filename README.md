@@ -11,35 +11,46 @@
 ### Folder Structure
 
 ```
-/
-├── main.py                 # Application entry point
-├── infra/                  # Infrastructure Layer
-│   ├── databases/          # Persistence management
-│   ├── repositories/       # Data access (JSON/DB)
-│   │   ├── activity_repository.py  # Recent history
-│   │   └── virus_repository.py     # Malware catalog
-│   └── llm/               # API Clients (Groq/Mock)
-├── llm/                    # AI Business Logic
-│   ├── parsers/           # Response interpreters (JSON)
-│   ├── prompts/           # Prompt engineering (txt)
-│   └── interface.py       # Facade for the simulation engine
-├── models/                 # Domain Models
-│   ├── network.py         # Network graph and nodes
-│   ├── node.py            # Connected entities
-│   └── virus.py           # Pathogen definition
-├── simulation/             # Simulation Core
-│   ├── engine.py          # Main Loop (Game Loop)
-│   ├── propagation.py     # Infection mathematics
-│   ├── mutation.py        # Virus evolution logic
-│   └── stop_conditions.py # Termination rules
-└── ui/                     # Graphical Interface (PySide6)
-    ├── app.py             # Qt application configuration
-    ├── main_window.py     # Navigation manager
-    ├── components/        # Reusable widgets
-    │   └── network_visualizer.py # Graph rendering
-    └── screens/           # Application screens
-        ├── simulation_execution.py # Real-time dashboard
-        └── simulation_setup.py     # Scenario configuration
+├── main.py                                 # Application entry point
+├── infra/                                  # Infrastructure Layer
+│   ├── factories.py                        # Centralized object creation (Factory Pattern)
+│   ├── databases/                          # Persistence management
+│   ├── repositories/                       # Data access (JSON/DB)
+│   │   ├── activity_repository.py          # Recent history
+│   │   └── virus_repository.py             # Malware catalog
+│   └── llm/                                # API Clients (Groq/Mock)
+├── llm/                                    # AI Business Logic
+│   ├── parsers/                            # Response interpreters (JSON)
+│   ├── prompts/                            # Prompt engineering (txt)
+│   └── interface.py                        # Facade for the simulation engine
+├── models/                                 # Domain Models
+│   ├── enums.py                            # Domain enumerators
+│   ├── network.py                          # Network graph and nodes
+│   ├── node.py                             # Connected entities
+│   └── virus.py                            # Pathogen definition
+├── simulation/                             # Simulation Core
+│   ├── engine.py                           # Main Loop (Simulation Loop)
+│   ├── propagation.py                      # Infection mathematics
+│   ├── mutation.py                         # Virus evolution logic
+│   └── stop_conditions.py                  # Termination rules
+└── ui/                                     # Graphical Interface (PySide6)
+    ├── app.py                              # Qt application configuration
+    ├── main_window.py                      # Navigation manager
+    ├── components/                         # Reusable widgets
+    │   ├── home/                           # Home screen specific widgets
+    │   │   ├── navbar.py                   # Side navigation
+    │   │   ├── welcome_hero.py             # Hero section
+    │   │   └── ...                         # Dashboard cards
+    │   ├── buttons.py                      # Custom buttons
+    │   ├── header.py                       # Standard app header
+    │   └── network_visualizer.py           # Graph rendering
+    └── screens/                            # Application screens
+        ├── simulation_execution.py         # Real-time dashboard
+        └── simulation_setup/               # Scenario configuration (Wizard package)
+            ├── topology_screen.py          # Network topology selection
+            ├── virus_screen.py             # Malware selection
+            ├──  configuration_screen.py    # Simulation parameters
+            └── ...
 ```
 
 ## 🧠 AI Integration (Groq)
@@ -82,7 +93,7 @@ class VirusCharacteristics:
     attack_power: float    # Brute force (0.0 to 10.0)
     stealth: float         # Ability to hide
     spread_rate: float     # Propagation speed
-    mutation_rate: float   # Chance to alter its statistics
+    mutation_rate: float   # Chance to alter its stats
     behavior: str          # Profile (e.g., "Aggressive", "Stealthy")
 ```
 
@@ -138,3 +149,10 @@ pip install -r requirements.txt
 # 3. Run
 python main.py
 ```
+
+## 🔮 Future Roadmap
+
+- **Timeline Navigation:** Implementation of a simulation playback system to retrace steps (forward/backward) for detailed analysis.
+- **Persistence Layer:** Integration with local SQL databases to save simulation outcomes and history.
+- **Custom Virus Builder:** A dedicated interface for designing personalized pathogen profiles with custom attribute distribution.
+- **Advanced Analytics:** Interactive charts and graphs to visualize infection trends, node compromise rates, and comparative statistics between disparate runs.

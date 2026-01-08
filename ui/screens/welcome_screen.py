@@ -94,7 +94,6 @@ class ApiKeyDialog(QDialog):
             QMessageBox.information(self, "Success", "API Key removed.")
             self.accept()
         except Exception:
-            # keyring throws error if password not found, which is fine
             QMessageBox.information(self, "Info", "No key found to delete.")
 
     def save_key(self):
@@ -120,7 +119,7 @@ class WelcomeScreen(NativeBase):
         layout.setContentsMargins(0, 0, 0, 0)
 
 
-        # Content Area - Centered
+        # Content Area
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
@@ -130,22 +129,22 @@ class WelcomeScreen(NativeBase):
         content_layout.setAlignment(Qt.AlignCenter)
         content_layout.setSpacing(20)
         content_layout.setContentsMargins(40, 60, 40, 60)
-
-        # Top Spacer for Centering
         content_layout.addStretch()
 
         # Badge
         badge = QFrame()
         badge.setStyleSheet("background: rgba(255,255,255,0.6); border: 1px solid #ccfbf1; border-radius: 20px;")
-        badge.setFixedSize(300, 40)
+
+        badge.setFixedSize(320, 40) 
         badge_layout = QHBoxLayout(badge)
         badge_layout.setContentsMargins(15, 0, 15, 0)
         dot = QLabel("●")
-        dot.setStyleSheet("color: #10b981; font-size: 12px;")
+
+        dot.setStyleSheet("color: #10b981; font-size: 12px; border: none; background: transparent;")
         txt = QLabel("V1.0 SIMULATION ENGINE READY")
-        txt.setStyleSheet("color: #0d9488; font-weight: bold; font-size: 12px; letter-spacing: 1.5px;")
+        txt.setStyleSheet("color: #0d9488; font-weight: bold; font-size: 12px; letter-spacing: 1.5px; border: none; background: transparent;")
         badge_layout.addWidget(dot)
-        badge_layout.addSpacing(5)
+        badge_layout.addSpacing(8)
         badge_layout.addWidget(txt)
         badge_layout.addStretch()
         content_layout.addWidget(badge, 0, Qt.AlignCenter)

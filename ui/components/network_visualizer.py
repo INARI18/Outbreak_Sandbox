@@ -13,13 +13,13 @@ class NetworkVisualizer(QGraphicsView):
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
         
         self.network = None
-        self.node_items = {} # map id -> QGraphicsEllipseItem
+        self.node_items = {} # map node id for QGraphicsEllipseItem to update colors
         
         # Colors
-        self.COLOR_HEALTHY = QColor("#10b981") # Emerald 500
-        self.COLOR_INFECTED = QColor("#ef4444") # Red 500
-        self.COLOR_QUARANTINED = QColor("#f59e0b") # Amber 500
-        self.COLOR_EDGE = QColor("#cbd5e1") # Slate 300
+        self.COLOR_HEALTHY = QColor("#10b981") 
+        self.COLOR_INFECTED = QColor("#ef4444") 
+        self.COLOR_QUARANTINED = QColor("#f59e0b") 
+        self.COLOR_EDGE = QColor("#cbd5e1") 
 
     def set_network(self, network):
         self.network = network
@@ -29,38 +29,33 @@ class NetworkVisualizer(QGraphicsView):
         if not network:
             return
 
-        # Scale factor to spread nodes out (assuming spring layout returned -1 to 1)
-        scale = 250.0
+        scale = 300.0
         
-        # Pass 1: Create Edges first (so they are under nodes)
-        # We generally iterate nodes, then connections. 
-        # To avoid duplicates, we can store added edges or check id < target_id
-        
-        # To draw edges correctly we need positions first. 
-        # So let's calculate positions map locally
+        # create edges
         positions = {}
         for node in network.nodes.values():
             positions[node.id] = (node.x * scale, node.y * scale)
             
         added_edges = set()
         
+        edge_pen = QPen(self.COLOR_EDGE, 1.5)
+        
         for node in network.nodes.values():
             u_pos = positions[node.id]
             
             for target_id in node.connected_nodes:
-                # consistent tuple for edge key
                 edge_key = tuple(sorted((node.id, target_id)))
                 
                 if edge_key not in added_edges and target_id in positions:
                     v_pos = positions[target_id]
                     
                     line = self.scene.addLine(u_pos[0], u_pos[1], v_pos[0], v_pos[1])
-                    line.setPen(QPen(self.COLOR_EDGE, 2))
+                    line.setPen(edge_pen)
                     line.setZValue(0)
                     added_edges.add(edge_key)
 
-        # Pass 2: Create Nodes
-        radius = 8
+        # create nodes
+        radius = 10 
         for node_id, pos in positions.items():
             x, y = pos
             ellipse = self.scene.addEllipse(x - radius, y - radius, radius * 2, radius * 2)

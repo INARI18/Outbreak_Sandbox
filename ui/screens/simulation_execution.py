@@ -55,7 +55,21 @@ class SimulationExecutionDashboardScreen(NativeBase):
         # List of decisions
         self.decision_list = QListWidget()
         self.decision_list.setFrameShape(QFrame.NoFrame)
-        self.decision_list.setStyleSheet("background: transparent;")
+        self.decision_list.setStyleSheet("""
+             QListWidget {
+                 background: transparent;
+                 outline: none;
+             }
+             QListWidget::item {
+                 border-bottom: 1px solid #f1f5f9;
+                 padding: 8px 0;
+             }
+             QListWidget::item:selected {
+                 background: transparent;
+                 color: inherit;
+             }
+        """)
+        self.decision_list.setWordWrap(True)
         # avoid horizontal scrolling for long reasoning text
         self.decision_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.decision_list.setSizeAdjustPolicy(QListWidget.AdjustToContents)
@@ -85,23 +99,26 @@ class SimulationExecutionDashboardScreen(NativeBase):
         top_stats = QHBoxLayout()
         
         self.lbl_infection_val = QLabel("0%")
-        self.lbl_infection_val.setStyleSheet("font-size: 18px; font-weight: 800; font-family: 'Space Grotesk';")
+        self.lbl_infection_val.setStyleSheet("font-size: 18px; font-weight: 800; font-family: 'Space Grotesk'; color: #0d9488;")
 
         self.lbl_step_val = QLabel("0")
-        self.lbl_step_val.setStyleSheet("font-size: 18px; font-weight: 800; font-family: 'Space Grotesk';")
+        self.lbl_step_val.setStyleSheet("font-size: 18px; font-weight: 800; font-family: 'Space Grotesk'; color: #0f172a;")
         
         self.lbl_nodes_val = QLabel("0")
-        self.lbl_nodes_val.setStyleSheet("font-size: 18px; font-weight: 800; font-family: 'Space Grotesk';")
+        self.lbl_nodes_val.setStyleSheet("font-size: 18px; font-weight: 800; font-family: 'Space Grotesk'; color: #0f172a;")
 
 
         def glass_stat(label, val_widget, change=None):
             f = QFrame()
-            f.setStyleSheet("background: rgba(255,255,255,0.85); border-radius: 12px; border: 1px solid white;")
+            # Changed border color to a slightly darker shade to stand out
+            # Remove white background border on label/val_widget
+            f.setStyleSheet("background: rgba(255,255,255,0.9); border-radius: 12px; border: 1px solid #cbd5e1;")
             v = QVBoxLayout(f)
             v.setContentsMargins(12, 8, 12, 8)
             lbl = QLabel(label)
-            lbl.setStyleSheet("font-size: 10px; font-weight: bold; text-transform: uppercase; color: #64748b;")
+            lbl.setStyleSheet("font-size: 10px; font-weight: bold; text-transform: uppercase; color: #64748b; background: transparent; border: none;")
             val_box = QHBoxLayout()
+            val_widget.setStyleSheet(val_widget.styleSheet() + "background: transparent; border: none;")
             val_box.addWidget(val_widget)
             if change:
                 # Placeholder for trend
@@ -235,7 +252,8 @@ class SimulationExecutionDashboardScreen(NativeBase):
         l_head.addWidget(create_icon("receipt_long", 18, "#0d9488"))
         l_head.addWidget(QLabel("EVENT LOG"))
         l_head.addStretch()
-        l_head.addWidget(create_icon("download", 16, "#94a3b8")) # Export
+        # Removed download button as requested
+        # l_head.addWidget(create_icon("download", 16, "#94a3b8")) 
         log_lay.addLayout(l_head)
         log_lay.addWidget(QLabel("<hr style='color:#e2e8f0'>"))
 
@@ -243,6 +261,21 @@ class SimulationExecutionDashboardScreen(NativeBase):
         self.event_list.setFrameShape(QFrame.NoFrame)
         self.event_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.event_list.setSizeAdjustPolicy(QListWidget.AdjustToContents)
+        self.event_list.setStyleSheet("""
+            QListWidget {
+                background: transparent;
+                outline: none;
+            }
+            QListWidget::item {
+                border-bottom: 1px solid #f1f5f9;
+                padding: 4px 0;
+            }
+            QListWidget::item:selected {
+                background: transparent;
+                color: inherit;
+            }
+        """)
+        self.event_list.setWordWrap(True)
         log_lay.addWidget(self.event_list)
         log_lay.addStretch()
 
@@ -406,8 +439,14 @@ class SimulationExecutionDashboardScreen(NativeBase):
         # Errors
         if 'error' in result and result.get('error'):
             err = result.get('error')
-            # concise error in event log; full LLM reasoning kept in decision panel only
-            self.add_event_item('error', f"Step {step_num}: ERROR - {err}")
+            # Check for LLM rate limit or context errors specifically
+            if "limit" in str(err).lower() or "token" in str(err).lower() or "429" in str(err):
+               self.add_event_item('llm_error', f"Step {step_num}: LLM Resource Limit - {err}")
+               self.add_decision(f"Step {step_num}", "LLM PAUSED", "Resource limit reached. Retrying...", "memory", "#f59e0b")
+            else:
+               self.add_event_item('error', f"Step {step_num}: ERROR - {err}")
+               self.add_decision(f"Step {step_num}", "SYSTEM ERROR", str(err), "error", "#ef4444")
+
         else:
             # Mutation
             if result.get('mutated'):
@@ -419,14 +458,20 @@ class SimulationExecutionDashboardScreen(NativeBase):
                 node = self.engine.network.get_node(str(target))
                 if node:
                     self.update_node_inspector(node)
+
+                icon = "check_circle"
+                color = "#059669"
+                title = "Infectious Spread"
+                self.add_decision(f"Step {step_num}", title, reason, icon, color)
+
             else:
                 self.add_event_item('attack_blocked', f"Step {step_num}: Attack blocked ({src} -> {target})")
+                
+                icon = "shield" # Changed from block for distinction
+                color = "#94a3b8" 
+                title = "Attack Blocked"
+                self.add_decision(f"Step {step_num}", title, reason, icon, color)
 
-        # Add human-friendly decision reasoning to the left panel (only here)
-        icon = "check_circle" if success else "block"
-        color = "#059669" if success else "#ef4444"
-        title = "Infectious Spread" if success else "Attack Blocked"
-        self.add_decision(f"Step {step_num}", title, reason, icon, color)
         self.decision_list.scrollToBottom()
 
         # Check stop conditions
@@ -460,47 +505,84 @@ class SimulationExecutionDashboardScreen(NativeBase):
         self.add_event_item('info', text)
 
     def add_event_item(self, event_type: str, text: str):
-        """Add a rich event item with icon + color based on event_type.
-
-        Supported event_type: infection, attack_blocked, mutation, propagation, scan, clean, error, info
-        """
-        from PySide6.QtGui import QColor
-
+        """Add a rich event item matching the new design."""
+        
+        # Color & Icon Map
         type_map = {
-            'infection': ('medical_services', '#ef4444'),
-            'attack_blocked': ('block', '#94a3b8'),
-            'mutation': ('science', '#7c3aed'),
-            'propagation': ('bolt', '#f59e0b'),
-            'scan': ('search', '#0ea5a4'),
-            'clean': ('check_circle', '#059669'),
-            'error': ('error', '#ef4444'),
-            'info': ('receipt_long', '#334155')
+            'infection':      ('medical_services', '#ef4444', '#fee2e2'), # Red
+            'attack_blocked': ('shield',           '#64748b', '#f1f5f9'), # Slate
+            'mutation':       ('science',          '#7c3aed', '#f3e8ff'), # Purple
+            'propagation':    ('bolt',             '#f59e0b', '#fef3c7'), # Amber
+            'scan':           ('search',           '#0ea5a4', '#ccfbf1'), # Teal
+            'clean':          ('check_circle',     '#059669', '#dcfce7'), # Green
+            'error':          ('error',            '#ef4444', '#fee2e2'), # Red
+            'info':           ('receipt_long',     '#334155', '#f1f5f9'), # Slate
+            'llm_error':      ('memory',           '#f59e0b', '#fef3c7')  # Amber
         }
 
-        icon_name, color = type_map.get(event_type, type_map['info'])
+        icon_name, main_color, bg_color = type_map.get(event_type, type_map['info'])
 
         item = QListWidgetItem()
         widget = QWidget()
+        widget.setStyleSheet("background: transparent; border: none; margin: 0; padding: 0;")
+        
         lay = QHBoxLayout(widget)
-        lay.setContentsMargins(0, 4, 0, 4)
+        lay.setContentsMargins(0, 8, 0, 8)
+        lay.setSpacing(8)
 
-        icon_lbl = create_icon(icon_name, 16, color)
-        bub = QFrame()
-        bub.setFixedSize(28, 28)
-        bub.setStyleSheet(f"background: white; border-radius: 14px; border: 1px solid #e6eef2;")
-        bl = QVBoxLayout(bub); bl.setContentsMargins(0,0,0,0); bl.setAlignment(Qt.AlignCenter)
-        bl.addWidget(icon_lbl)
+        # 1. Left Icon (Rounded Square)
+        icon_box = QFrame()
+        icon_box.setFixedSize(30, 30)
+        icon_box.setStyleSheet(f"background: {bg_color}; border-radius: 8px;")
+        ib_lay = QVBoxLayout(icon_box)
+        ib_lay.setContentsMargins(0,0,0,0)
+        ib_lay.setAlignment(Qt.AlignCenter)
+        ib_lay.addWidget(create_icon(icon_name, 16, main_color))
+        
+        lay.addWidget(icon_box, 0, Qt.AlignTop)
 
-        lay.addWidget(bub, 0, Qt.AlignTop)
+        # 2. Right Content
+        right_col = QVBoxLayout()
+        right_col.setContentsMargins(0, 0, 0, 0)
+        right_col.setSpacing(4)
 
-        txt_v = QVBoxLayout()
-        main = QLabel(text)
-        main.setWordWrap(True)
-        main.setStyleSheet(f"font-weight: bold; color: {color};")
-        main.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        txt_v.addWidget(main)
+        # Header: "System Log" + Timestamp
+        header_row = QHBoxLayout()
+        header_row.setSpacing(8)
+        
+        title_lbl = QLabel("System Log" if event_type == 'info' else event_type.replace('_', ' ').title())
+        title_lbl.setStyleSheet(f"font-weight: bold; color: #1e293b; font-size: 13px;")
+        
+        step_val = self.engine.current_step if self.engine else 0
+        time_badge = QLabel(f"Step: {step_val}")
+        time_badge.setStyleSheet("background: #f1f5f9; color: #64748b; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold;")
+        
+        header_row.addWidget(title_lbl)
+        header_row.addStretch()
+        header_row.addWidget(time_badge)
+        
+        right_col.addLayout(header_row)
 
-        lay.addLayout(txt_v)
+        # Log Box (Monospace look)
+        log_box = QLabel(f"> {text}")
+        log_box.setWordWrap(True)
+        # Using a slight border/background to mimic a terminal block
+        log_box.setStyleSheet("""
+            background: #f8fafc; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 6px; 
+            padding: 8px; 
+            color: #334155; 
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 11px;
+        """)
+        
+        right_col.addWidget(log_box)
+        
+        lay.addLayout(right_col)
+        
+        # Fixed width to force wrapping in 300px col
+        widget.setFixedWidth(260)
 
         item.setSizeHint(widget.sizeHint())
         self.event_list.addItem(item)
@@ -523,45 +605,123 @@ class SimulationExecutionDashboardScreen(NativeBase):
             self.node_status_badge.setStyleSheet("background: #ecfdf5; color: #059669; font-size: 10px; font-weight: bold; border-radius: 4px; padding: 2px 4px;")
 
     def add_decision(self, step, title, desc, icon_name, color="#0d9488"):
-        """Adds a tailored ListItemWidget."""
+        """Adds a tailored ListItemWidget matching the new design."""
+        
+        # Determine background color based on input color (approximate mapping)
+        # Since we don't have a hex-to-rgba converter handy, we'll map common colors
+        bg_map = {
+            '#ef4444': '#fee2e2', # Red -> Red 100
+            '#059669': '#dcfce7', # Green -> Green 100
+            '#94a3b8': '#f1f5f9', # Slate -> Slate 100
+            '#0d9488': '#ccfbf1', # Teal -> Teal 100
+        }
+        bg_color = bg_map.get(color, '#f1f5f9') # Default to light gray
+
         item = QListWidgetItem()
         widget = QWidget()
+        widget.setStyleSheet("background: transparent; border: none; margin: 0; padding: 0;") 
+        
         lay = QHBoxLayout(widget)
-        lay.setContentsMargins(0, 5, 0, 5)
+        lay.setContentsMargins(0, 4, 0, 4)
+        lay.setSpacing(8)
         
-        # Icon bubble
-        icon_lbl = create_icon(icon_name, 18, color)
-        icon_bubble = QFrame()
-        icon_bubble.setFixedSize(32, 32)
-        icon_bubble.setStyleSheet("background: white; border-radius: 16px; border: 1px solid #e2e8f0;")
-        ib_lay = QVBoxLayout(icon_bubble); ib_lay.setContentsMargins(0,0,0,0); ib_lay.setAlignment(Qt.AlignCenter)
-        ib_lay.addWidget(icon_lbl)
+        # 1. Left Icon (Rounded Square)
+        icon_box = QFrame()
+        icon_box.setFixedSize(32, 32)
+        icon_box.setStyleSheet(f"background: {bg_color}; border-radius: 8px;")
+        ib_lay = QVBoxLayout(icon_box)
+        ib_lay.setContentsMargins(0,0,0,0)
+        ib_lay.setAlignment(Qt.AlignCenter)
+        ib_lay.addWidget(create_icon(icon_name, 18, color))
         
-        lay.addWidget(icon_bubble, 0, Qt.AlignTop)
+        lay.addWidget(icon_box, 0, Qt.AlignTop)
         
-        # Text content
-        txt_v = QVBoxLayout()
-        top_row = QHBoxLayout()
-        t_step = QLabel(step)
-        t_step.setStyleSheet("font-size: 10px; color: #94a3b8;")
-        t_title = QLabel(title)
-        t_title.setStyleSheet(f"font-weight: bold; font-size: 11px; color: {color}; text-transform: uppercase;")
-        top_row.addWidget(t_step)
-        top_row.addWidget(t_title)
-        top_row.addStretch()
+        # 2. Right Content
+        right_col = QVBoxLayout()
+        right_col.setContentsMargins(0, 0, 0, 0)
+        right_col.setSpacing(4)
         
-        body = QLabel(desc)
-        body.setWordWrap(True)
-        body.setStyleSheet("font-size: 11px; color: #334155;")
+        # Header: Title + Timestamp Badge
+        header_row = QHBoxLayout()
+        header_row.setSpacing(8)
         
-        txt_v.addLayout(top_row)
-        txt_v.addWidget(body)
+        t_title = QLabel("Virus Logic Core" if "step" in step.lower() else title)
+        t_title.setStyleSheet("font-weight: 800; font-size: 13px; color: #0f172a;")
         
-        lay.addLayout(txt_v)
+        # Parse numeric step from string "Step X" for the badge
+        # Try to extract numbers, else use 0
+        try:
+            # Simple extraction of digits
+            import re
+            digits = re.findall(r'\d+', str(step))
+            step_val = digits[0] if digits else "?"
+            badge_text = f"Step: {step_val}"
+        except:
+            badge_text = "Step: ?"
+
+        time_badge = QLabel(badge_text)
+        time_badge.setStyleSheet("border: 1px solid #e2e8f0; color: #64748b; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold;")
+        
+        header_row.addWidget(t_title)
+        header_row.addStretch()
+        header_row.addWidget(time_badge)
+        
+        right_col.addLayout(header_row)
+        
+        # Body Content (with accent line)
+        body_container = QWidget()
+        body_lay = QHBoxLayout(body_container)
+        body_lay.setContentsMargins(0,0,0,0)
+        body_lay.setSpacing(8)
+        
+        # Accent Line
+        accent_line = QFrame()
+        accent_line.setFixedWidth(2)
+        accent_line.setStyleSheet(f"background: {color}; border-radius: 1px;")
+        body_lay.addWidget(accent_line)
+        
+        # Text Block
+        text_block = QVBoxLayout()
+        text_block.setContentsMargins(0,0,0,0)
+        text_block.setSpacing(4)
+        
+        # Main Description (Attempting rudimentary highlighting logic)
+        # e.g., if there is a '#' assume it's a node ref
+        formatted_desc = desc
+        if "#" in desc:
+            import re
+            # Regex to wrap #Number or Node #Number
+            formatted_desc = re.sub(r"(#Node_\d+|Node #\d+|Node \d+|#\d+)", rf"<span style='background: {bg_color}; color: {color}; padding: 0 4px;'>\1</span>", desc)
+        
+        msg_label = QLabel(formatted_desc)
+        msg_label.setWordWrap(True)
+        msg_label.setStyleSheet("color: #1e293b; font-size: 12px; line-height: 1.3;")
+        msg_label.setTextFormat(Qt.RichText)
+        
+        # Static Analysis Placeholder (to match design)
+        # Only show if not just a simple step
+        analysis_label = QLabel(f"Analysis: Action optimized for network topology. {title}.")
+        analysis_label.setWordWrap(True)
+        analysis_label.setStyleSheet("color: #64748b; font-size: 10px; font-style: italic;")
+
+        text_block.addWidget(msg_label)
+        text_block.addWidget(analysis_label)
+        
+        body_lay.addLayout(text_block)
+        
+        right_col.addWidget(body_container)
+        
+        lay.addLayout(right_col)
+        
+        # Force width for wrapping in 280px col
+        widget.setFixedWidth(240)
         
         item.setSizeHint(widget.sizeHint())
         self.decision_list.addItem(item)
         self.decision_list.setItemWidget(item, widget)
+        # Force update geometry
+        widget.adjustSize()
+        item.setSizeHint(widget.sizeHint())
 
     def _save_activity(self):
         if not self.engine or self.engine.current_step <= 0:

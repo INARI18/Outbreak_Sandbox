@@ -107,6 +107,114 @@
       "year": 2008,
       "impact": "military",
       "vulnerability_window": "narrow"
+    },
+    {
+      "id": "iloveyou",
+      "name": "ILOVEYOU",
+      "type": "worm",
+      "description": "Love letter email worm that infected 10% of internet-connected computers in 2000",
+      "characteristics": {
+        "attack_power": 4,
+        "speed": 10,
+        "stealth": 2,
+        "mutation_rate": 6,
+        "target_priority": "email_contacts",
+        "behavior": "Explosive social engineering. Sends itself to all contacts in Outlook address book. Overwrites standard files (images, audio) with copies of itself. Relies on human curiosity rather than software exploits."
+      },
+      "exploit": "VBScript + Social Engineering",
+      "year": 2000,
+      "impact": "global",
+      "vulnerability_window": "wide"
+    },
+    {
+      "id": "zeus",
+      "name": "Zeus",
+      "type": "trojan",
+      "description": "The king of banking trojans, stealing credentials and forming a massive botnet",
+      "characteristics": {
+        "attack_power": 6,
+        "speed": 5,
+        "stealth": 9,
+        "mutation_rate": 8,
+        "target_priority": "high_value_financial",
+        "behavior": "Silent thief. Injects code into banking websites to steal credentials. Forms a peer-to-peer botnet for resilience. Focuses on remaining undetected to maximize financial theft over time."
+      },
+      "exploit": "Drive-by downloads + Phishing",
+      "year": 2007,
+      "impact": "financial",
+      "vulnerability_window": "maintenance_needed"
+    },
+    {
+      "id": "emotet",
+      "name": "Emotet",
+      "type": "trojan",
+      "description": "Polymorphic malware often serving as a distributor for other threats like ransomware",
+      "characteristics": {
+        "attack_power": 7,
+        "speed": 7,
+        "stealth": 8,
+        "mutation_rate": 10,
+        "target_priority": "network_bridgehead",
+        "behavior": "The gateway drug of malware. Changes its code every time it's downloaded (polymorphic). Establishes a foothold and then sells access to other criminals (Ransomware-as-a-Service model)."
+      },
+      "exploit": "Malspam (Malicious Spam) + Macro Scripts",
+      "year": 2014,
+      "impact": "corporate",
+      "vulnerability_window": "wide"
+    },
+    {
+      "id": "code_red",
+      "name": "Code Red",
+      "type": "worm",
+      "description": "Server-side worm that attacked Microsoft IIS web servers, defacing sites",
+      "characteristics": {
+        "attack_power": 5,
+        "speed": 9,
+        "stealth": 1,
+        "mutation_rate": 1,
+        "target_priority": "web_servers",
+        "behavior": "Memory-resident predator. Unlike others, it lives only in memory, leaving no trace on the hard drive. Scans for random IP addresses to infect. Launches DDoS attacks on promised dates."
+      },
+      "exploit": "Buffer Overflow in IIS Indexing Service",
+      "year": 2001,
+      "impact": "infrastructure",
+      "vulnerability_window": "narrow"
+    },
+    {
+      "id": "storm_worm",
+      "name": "Storm Worm",
+      "type": "botnet",
+      "description": "One of the first peer-to-peer botnets, massive and resilient",
+      "characteristics": {
+        "attack_power": 6,
+        "speed": 8,
+        "stealth": 6,
+        "mutation_rate": 7,
+        "target_priority": "cpu_resources",
+        "behavior": "Decentralized swarm. Uses P2P architecture making it incredibly hard to take down. If defenders attack the servers, the bots retaliate with DDoS (defensive behavior)."
+      },
+      "exploit": "Social Engineering (Storm news headlines)",
+      "year": 2007,
+      "impact": "global",
+      "vulnerability_window": "wide"
+    },
+    {
+      "id": "darkside",
+      "name": "DarkSide",
+      "type": "ransomware",
+      "description": "Modern RaaS responsible for the Colonial Pipeline shutdown",
+      "characteristics": {
+        "attack_power": 9,
+        "speed": 7,
+        "stealth": 5,
+        "mutation_rate": 4,
+        "target_priority": "big_game_hunting",
+        "behavior": "Professional corporate extortion. Analysis of victim financials before setting ransom price. Steals data for 'double extortion' (pay to decrypt + pay to prevent leak). Avoids systems in specific languages/regions."
+      },
+      "exploit": "Compromised Passwords + Known Vulnerabilities",
+      "year": 2020,
+      "impact": "critical_infrastructure",
+      "vulnerability_window": "medium"
     }
   ]
 }

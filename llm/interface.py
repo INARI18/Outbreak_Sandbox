@@ -39,7 +39,7 @@ class LLMInterface:
                 "raw_response": raw_response
             }
 
-        # If the LLM explicitly returned null for source/target, treat as an invalid decision
+        # If llm returned null for source/target == invalid decision
         if decision.get("source_node_id") is None or decision.get("target_node_id") is None:
             return {
                 "error": "invalid_decision",
@@ -50,13 +50,11 @@ class LLMInterface:
         source = decision["source_node_id"]
         target = decision["target_node_id"]
 
-        # Validate that the target is connected to the source. If not, attempt an automatic fallback:
         src_node = network.get_node(source)
         if not src_node:
             return {"error": "invalid_source_node"}
 
         if target not in src_node.connected_nodes:
-            # Attempt fallback: choose the first healthy neighbor of the chosen source
             for neighbor_id in src_node.connected_nodes:
                 neighbor = network.get_node(neighbor_id)
                 if neighbor and not neighbor.is_infected:
@@ -66,7 +64,6 @@ class LLMInterface:
                         "reasoning": f"fallback: original target {target} not connected; choosing neighbor {neighbor_id}"
                     }
 
-            # If source has no healthy neighbors, try any infected node that has a healthy neighbor
             for node in network.infected_nodes():
                 for neighbor_id in node.connected_nodes:
                     neighbor = network.get_node(neighbor_id)
@@ -77,7 +74,6 @@ class LLMInterface:
                             "reasoning": f"fallback: original choice invalid; choosing {node.id}->{neighbor_id}"
                         }
 
-            # No possible fallback found
             return {
                 "error": "no_valid_targets",
                 "details": "LLM suggested a non-connected target and no fallback available",
