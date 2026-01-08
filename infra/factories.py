@@ -134,6 +134,6 @@ class SimulationFactory:
                 node.infect()
 
         # 4. Construct Engine
-        engine = SimulationEngine(network, virus, llm_interface=llm_interface)
+        engine = SimulationEngine(network, virus, llm_interface=llm_interface, topology_type=topology_key)
         
         return engine

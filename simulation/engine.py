@@ -18,7 +18,8 @@ class SimulationEngine:
         network: Network,
         virus: Virus,
         llm_interface=None,
-        max_steps: int = 50
+        max_steps: int = 50,
+        topology_type: str = "Unknown"
     ):
         self.network = network
         self.virus = virus
@@ -28,6 +29,7 @@ class SimulationEngine:
         self.history = []  # Stores full state snapshots per step
         self.llm = llm_interface
         self.mutation_strategy = None
+        self.topology_type = topology_type
 
         if self.llm:
              from simulation.llm_mutation_strategy import LLMMutationStrategy

@@ -46,7 +46,18 @@ def topology_star(node_count: int, **_) -> nx.Graph:
 def topology_mesh(node_count: int, **_) -> nx.Graph:
     if node_count <= 0:
         return nx.empty_graph(max(0, node_count))
-    G = nx.complete_graph(node_count)
+    if node_count < 5:
+        G = nx.complete_graph(node_count)
+        return _relabel_to_ints(G)
+
+    # For larger graphs, use Watts-Strogatz small-world model
+    k = min(node_count - 1, 6) 
+
+    try:
+        G = nx.watts_strogatz_graph(node_count, k, 0.3)
+    except Exception:
+        G = nx.complete_graph(node_count)
+        
     return _relabel_to_ints(G)
 
 
@@ -107,26 +118,17 @@ def topology_hub(node_count: int, hubs: int = 1, **_) -> nx.Graph:
 
 
 def topology_tree(node_count: int, **_) -> nx.Graph:
-    """Generate a tree topology with node_count nodes.
-
-    Uses networkx.random_tree to generate a spanning tree with the requested
-    number of nodes, then relabels to 0..n-1.
-    """
+    """Generate a tree topology with node_count nodes"""
     if node_count <= 0:
         return nx.empty_graph(max(0, node_count))
     if node_count == 1:
         return nx.empty_graph(1)
 
-    # Prefer using networkx.random_tree when available (returns exactly n nodes).
-    # This produces a random spanning tree. Fall back to a balanced tree trimmed
-    # to the requested size if random_tree is not present.
     if node_count <= 2:
         return topology_star(node_count)
 
-    # Try to call networkx.random_tree if available (API differs across nx versions)
     rand_tree_fn = getattr(nx, "random_tree", None)
     if rand_tree_fn is None:
-        # some networkx versions expose it under generators.trees.random_tree
         try:
             from networkx.generators.trees import random_tree as _rt
             rand_tree_fn = _rt
@@ -138,7 +140,6 @@ def topology_tree(node_count: int, **_) -> nx.Graph:
             G = rand_tree_fn(node_count)
             return _relabel_to_ints(G)
         except Exception:
-            # If random_tree fails for any reason, fall through to balanced approach
             pass
 
     # Balanced binary tree fallback (may produce more nodes than requested)
@@ -148,10 +149,6 @@ def topology_tree(node_count: int, **_) -> nx.Graph:
         h += 1
 
     G = nx.balanced_tree(b, h)
-
-    # Trim the balanced tree to exactly `node_count` nodes by removing leaves
-    # from the deepest level first to preserve overall balance.
-    # Work on a copy so we don't mutate the original generator result unexpectedly.
     working = G.copy()
 
     # choose a root deterministically (0 should be root for balanced_tree)

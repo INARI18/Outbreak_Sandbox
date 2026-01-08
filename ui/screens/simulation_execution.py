@@ -1,7 +1,8 @@
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, QSize
+from PySide6.QtGui import QFont, QFontMetrics
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QListWidget,
-    QListWidgetItem, QFrame, QLineEdit, QMessageBox, QDialog
+    QListWidgetItem, QFrame, QLineEdit, QMessageBox, QDialog, QListView
 )
 from ui.screens.utils.base import NativeBase, create_icon, create_card, create_qicon
 from ui.components import StandardHeader
@@ -37,6 +38,7 @@ class SimulationExecutionDashboardScreen(NativeBase):
         col1 = create_card()
         col1.setFixedWidth(280)
         col1_layout = QVBoxLayout(col1)
+        col1_layout.setContentsMargins(10, 15, 10, 15)
         
         # Header
         c1_head = QHBoxLayout()
@@ -245,22 +247,21 @@ class SimulationExecutionDashboardScreen(NativeBase):
         
         col3.addWidget(node_card)
 
-    # Event Log Card - dynamic
+        # Event Log Card - dynamic
         log_card = create_card()
         log_lay = QVBoxLayout(log_card)
+        log_lay.setContentsMargins(10, 15, 10, 15)
         l_head = QHBoxLayout()
         l_head.addWidget(create_icon("receipt_long", 18, "#0d9488"))
         l_head.addWidget(QLabel("EVENT LOG"))
         l_head.addStretch()
-        # Removed download button as requested
-        # l_head.addWidget(create_icon("download", 16, "#94a3b8")) 
         log_lay.addLayout(l_head)
         log_lay.addWidget(QLabel("<hr style='color:#e2e8f0'>"))
 
         self.event_list = QListWidget()
         self.event_list.setFrameShape(QFrame.NoFrame)
         self.event_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.event_list.setSizeAdjustPolicy(QListWidget.AdjustToContents)
+        self.event_list.setResizeMode(QListView.Adjust)
         self.event_list.setStyleSheet("""
             QListWidget {
                 background: transparent;
@@ -277,12 +278,12 @@ class SimulationExecutionDashboardScreen(NativeBase):
         """)
         self.event_list.setWordWrap(True)
         log_lay.addWidget(self.event_list)
-        log_lay.addStretch()
 
         col3.addWidget(log_card)
         
         wrapper_col3 = QWidget()
         wrapper_col3.setFixedWidth(300)
+        col3.setContentsMargins(0, 0, 0, 0)
         wrapper_col3.setLayout(col3)
         
         grid.addWidget(wrapper_col3)
@@ -297,7 +298,8 @@ class SimulationExecutionDashboardScreen(NativeBase):
         self.decision_list.clear()
         
         virus_name = engine.virus.name
-        self.header.set_subtitle(f"Scenario: {virus_name} • Ready")
+        network_type = engine.topology_type if hasattr(engine, 'topology_type') else "Network"
+        self.header.set_subtitle(f"Scenario: {virus_name} • {network_type}")
         
         # Update node count
         total = len(engine.network.nodes)
@@ -309,12 +311,7 @@ class SimulationExecutionDashboardScreen(NativeBase):
         self.update_stats_ui()
 
     def _confirm_exit_to_dashboard(self):
-        """Ask the user to confirm leaving the simulation (this will stop it and clear state).
-
-        If confirmed, stop timer, clear engine and UI state, and emit dashboard_requested so
-        MainWindow navigates back to the dashboard/home screen.
-        """
-        # Use a custom-styled dialog (so it matches the app look) instead of the native QMessageBox
+        """Ask the user to confirm leaving the simulation"""
         dlg = QDialog(self)
         dlg.setModal(True)
         dlg.setWindowTitle("Confirm Leave Simulation")
@@ -439,13 +436,16 @@ class SimulationExecutionDashboardScreen(NativeBase):
         # Errors
         if 'error' in result and result.get('error'):
             err = result.get('error')
+            
+            error_detail = reason if reason else str(err)
+
             # Check for LLM rate limit or context errors specifically
             if "limit" in str(err).lower() or "token" in str(err).lower() or "429" in str(err):
                self.add_event_item('llm_error', f"Step {step_num}: LLM Resource Limit - {err}")
-               self.add_decision(f"Step {step_num}", "LLM PAUSED", "Resource limit reached. Retrying...", "memory", "#f59e0b")
+               self.add_decision(f"Step {step_num}", "LLM PAUSED", f"Limit Reached: {error_detail}", "memory", "#f59e0b")
             else:
                self.add_event_item('error', f"Step {step_num}: ERROR - {err}")
-               self.add_decision(f"Step {step_num}", "SYSTEM ERROR", str(err), "error", "#ef4444")
+               self.add_decision(f"Step {step_num}", "SYSTEM ERROR", error_detail, "error", "#ef4444")
 
         else:
             # Mutation
@@ -509,15 +509,15 @@ class SimulationExecutionDashboardScreen(NativeBase):
         
         # Color & Icon Map
         type_map = {
-            'infection':      ('medical_services', '#ef4444', '#fee2e2'), # Red
-            'attack_blocked': ('shield',           '#64748b', '#f1f5f9'), # Slate
-            'mutation':       ('science',          '#7c3aed', '#f3e8ff'), # Purple
-            'propagation':    ('bolt',             '#f59e0b', '#fef3c7'), # Amber
-            'scan':           ('search',           '#0ea5a4', '#ccfbf1'), # Teal
-            'clean':          ('check_circle',     '#059669', '#dcfce7'), # Green
-            'error':          ('error',            '#ef4444', '#fee2e2'), # Red
-            'info':           ('receipt_long',     '#334155', '#f1f5f9'), # Slate
-            'llm_error':      ('memory',           '#f59e0b', '#fef3c7')  # Amber
+            'infection':      ('medical_services', '#ef4444', '#fee2e2'), 
+            'attack_blocked': ('shield',           '#64748b', '#f1f5f9'), 
+            'mutation':       ('science',          '#7c3aed', '#f3e8ff'), 
+            'propagation':    ('bolt',             '#f59e0b', '#fef3c7'), 
+            'scan':           ('search',           '#0ea5a4', '#ccfbf1'), 
+            'clean':          ('check_circle',     '#059669', '#dcfce7'), 
+            'error':          ('error',            '#ef4444', '#fee2e2'), 
+            'info':           ('receipt_long',     '#334155', '#f1f5f9'), 
+            'llm_error':      ('memory',           '#f59e0b', '#fef3c7')  
         }
 
         icon_name, main_color, bg_color = type_map.get(event_type, type_map['info'])
@@ -581,10 +581,21 @@ class SimulationExecutionDashboardScreen(NativeBase):
         
         lay.addLayout(right_col)
         
-        # Fixed width to force wrapping in 300px col
-        widget.setFixedWidth(260)
-
-        item.setSizeHint(widget.sizeHint())
+        target_width = 270
+        widget.setFixedWidth(target_width)
+        text_width_limit = 210 
+        
+        font = QFont("Consolas", 11)
+        font.setStyleHint(QFont.Monospace)
+        
+        fm = QFontMetrics(font)
+        text_rect = fm.boundingRect(0, 0, text_width_limit, 10000, Qt.TextWordWrap, f"> {text}")
+        text_height = text_rect.height()
+        
+        total_height = 8 + 20 + 4 + text_height + 18 + 8
+        total_height = max(total_height, 60)
+        
+        item.setSizeHint(QSize(target_width, total_height))
         self.event_list.addItem(item)
         self.event_list.setItemWidget(item, widget)
         self.event_list.scrollToBottom()
@@ -605,17 +616,13 @@ class SimulationExecutionDashboardScreen(NativeBase):
             self.node_status_badge.setStyleSheet("background: #ecfdf5; color: #059669; font-size: 10px; font-weight: bold; border-radius: 4px; padding: 2px 4px;")
 
     def add_decision(self, step, title, desc, icon_name, color="#0d9488"):
-        """Adds a tailored ListItemWidget matching the new design."""
-        
-        # Determine background color based on input color (approximate mapping)
-        # Since we don't have a hex-to-rgba converter handy, we'll map common colors
         bg_map = {
-            '#ef4444': '#fee2e2', # Red -> Red 100
-            '#059669': '#dcfce7', # Green -> Green 100
-            '#94a3b8': '#f1f5f9', # Slate -> Slate 100
-            '#0d9488': '#ccfbf1', # Teal -> Teal 100
+            '#ef4444': '#fee2e2', 
+            '#059669': '#dcfce7', 
+            '#94a3b8': '#f1f5f9', 
+            '#0d9488': '#ccfbf1', 
         }
-        bg_color = bg_map.get(color, '#f1f5f9') # Default to light gray
+        bg_color = bg_map.get(color, '#f1f5f9')
 
         item = QListWidgetItem()
         widget = QWidget()
@@ -648,10 +655,7 @@ class SimulationExecutionDashboardScreen(NativeBase):
         t_title = QLabel("Virus Logic Core" if "step" in step.lower() else title)
         t_title.setStyleSheet("font-weight: 800; font-size: 13px; color: #0f172a;")
         
-        # Parse numeric step from string "Step X" for the badge
-        # Try to extract numbers, else use 0
         try:
-            # Simple extraction of digits
             import re
             digits = re.findall(r'\d+', str(step))
             step_val = digits[0] if digits else "?"
@@ -685,8 +689,6 @@ class SimulationExecutionDashboardScreen(NativeBase):
         text_block.setContentsMargins(0,0,0,0)
         text_block.setSpacing(4)
         
-        # Main Description (Attempting rudimentary highlighting logic)
-        # e.g., if there is a '#' assume it's a node ref
         formatted_desc = desc
         if "#" in desc:
             import re
@@ -698,14 +700,7 @@ class SimulationExecutionDashboardScreen(NativeBase):
         msg_label.setStyleSheet("color: #1e293b; font-size: 12px; line-height: 1.3;")
         msg_label.setTextFormat(Qt.RichText)
         
-        # Static Analysis Placeholder (to match design)
-        # Only show if not just a simple step
-        analysis_label = QLabel(f"Analysis: Action optimized for network topology. {title}.")
-        analysis_label.setWordWrap(True)
-        analysis_label.setStyleSheet("color: #64748b; font-size: 10px; font-style: italic;")
-
         text_block.addWidget(msg_label)
-        text_block.addWidget(analysis_label)
         
         body_lay.addLayout(text_block)
         
@@ -713,13 +708,11 @@ class SimulationExecutionDashboardScreen(NativeBase):
         
         lay.addLayout(right_col)
         
-        # Force width for wrapping in 280px col
-        widget.setFixedWidth(240)
+        widget.setFixedWidth(255)
         
         item.setSizeHint(widget.sizeHint())
         self.decision_list.addItem(item)
         self.decision_list.setItemWidget(item, widget)
-        # Force update geometry
         widget.adjustSize()
         item.setSizeHint(widget.sizeHint())
 
@@ -733,11 +726,10 @@ class SimulationExecutionDashboardScreen(NativeBase):
             total = len(self.engine.network.nodes)
             rate = (infected / total) * 100 if total > 0 else 0
             
-            # Extract data safely. Assuming simulation ID is just a random string or incremental
             sim_id = str(uuid.uuid4())[:8].upper()
             
             virus_name = self.engine.virus.name if self.engine.virus and hasattr(self.engine.virus, 'name') else "Unknown"
-            topo_type = "Network" 
+            topo_type = self.engine.topology_type if hasattr(self.engine, 'topology_type') else "Unknown" 
             
             repo.log_activity(sim_id, topo_type, total, virus_name, rate)
         except Exception as e:
