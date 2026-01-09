@@ -2,7 +2,7 @@ from ui.utils.loader_thread import EngineLoaderThread
 from PySide6.QtWidgets import QMainWindow, QStackedWidget, QWidget, QVBoxLayout
 from PySide6.QtCore import Qt
 from ui.screens.welcome_screen import WelcomeScreen
-from ui.components.progress_dialog import ModernProgressDialog
+from ui.components.common.progress_dialog import ModernProgressDialog
 from ui.screens.home_screen import HomeScreen
 from ui.screens.simulation_setup import (
     TopologySelectionScreen,

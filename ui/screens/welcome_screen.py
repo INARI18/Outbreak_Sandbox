@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
 )
 from ui.utils.base import NativeBase, create_icon, create_card, create_qicon
 from ui.components import PrimaryButton
-from ui.components.settings_dialog import SettingsDialog
+from ui.components.common.settings_dialog import SettingsDialog
 
 class WelcomeScreen(NativeBase):
     def __init__(self):

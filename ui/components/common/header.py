@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout, QLabel, QPushButton
 from PySide6.QtCore import Signal, Qt
 from ui.utils.base import create_icon, create_qicon
-from ui.components.settings_dialog import SettingsDialog
+from ui.components.common.settings_dialog import SettingsDialog
+from ui.theme import Theme
 
 class StandardHeader(QFrame):
     dashboard_requested = Signal()
@@ -9,14 +10,14 @@ class StandardHeader(QFrame):
     def __init__(self, title="Outbreak Sandbox", subtitle=None, show_dashboard_btn=True, show_settings_btn=True):
         super().__init__()
         self.setObjectName("header_frame")
-        self.setStyleSheet("#header_frame { background: white; border-bottom: 1px solid #e2e8f0; }")
+        self.setStyleSheet(f"#header_frame {{ background: white; border-bottom: 1px solid {Theme.BORDER}; }}")
         self.setFixedHeight(70)
         
         layout = QHBoxLayout(self)
         layout.setContentsMargins(30, 0, 30, 0)
         
         # Icon
-        logo = create_icon("bug_report", 28, "#0d9488")
+        logo = create_icon("bug_report", 28, Theme.PRIMARY)
         
         # Text Column (Title + Optional Subtitle)
         text_col = QVBoxLayout()
@@ -29,18 +30,18 @@ class StandardHeader(QFrame):
         title_row.setContentsMargins(0, 0, 0, 0)
         
         title_lbl = QLabel(title)
-        title_lbl.setStyleSheet("font-family: 'Space Grotesk'; font-weight: bold; font-size: 16px; color: #0f172a;")
+        title_lbl.setStyleSheet(f"font-family: 'Space Grotesk'; font-weight: bold; font-size: 16px; color: {Theme.TEXT_PRIMARY};")
         title_row.addWidget(title_lbl)
         
         version_lbl = QLabel("v1.0")
-        version_lbl.setStyleSheet("background: #f1f5f9; color: #64748b; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px;")
+        version_lbl.setStyleSheet(f"background: {Theme.BACKGROUND_APP}; color: {Theme.TEXT_SECONDARY}; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px;")
         title_row.addWidget(version_lbl)
         title_row.addStretch()
         
         text_col.addLayout(title_row)
         
         self.subtitle_lbl = QLabel(subtitle) if subtitle else QLabel()
-        self.subtitle_lbl.setStyleSheet("font-size: 11px; color: #64748b;")
+        self.subtitle_lbl.setStyleSheet(f"font-size: 11px; color: {Theme.TEXT_SECONDARY};")
         if not subtitle:
             self.subtitle_lbl.hide()
             

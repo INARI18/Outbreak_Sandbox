@@ -1,8 +1,9 @@
 from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import Qt
+from ui.theme import Theme
 
 class Badge(QLabel):
-    def __init__(self, text="BADGE", color="#64748b", bg_color="#f1f5f9", theme=None, parent=None):
+    def __init__(self, text="BADGE", color=Theme.TEXT_SECONDARY, bg_color=Theme.BACKGROUND_APP, theme=None, parent=None):
         super().__init__(text, parent)
         self.setAlignment(Qt.AlignCenter)
         
@@ -12,6 +13,7 @@ class Badge(QLabel):
             self.bg_color = bg_color
             self.text_color = color
             self._update_style()
+
         
     def _update_style(self):
         self.setStyleSheet(f"""
@@ -29,11 +31,11 @@ class Badge(QLabel):
 
     def set_theme(self, theme="gray"):
         themes = {
-            "gray": ("#64748b", "#f1f5f9"),
-            "green": ("#059669", "#ecfdf5"),
-            "blue": ("#3b82f6", "#eff6ff"),
-            "yellow": ("#eab308", "#fefce8"),
-            "red": ("#be123c", "#fff1f2"),
+            "gray": (Theme.TEXT_SECONDARY, Theme.BACKGROUND_APP),
+            "green": (Theme.SUCCESS, "#ecfdf5"),
+            "blue": (Theme.SECONDARY, "#eff6ff"),
+            "yellow": (Theme.WARNING, "#fefce8"),
+            "red": (Theme.DANGER, "#fff1f2"),
             "purple": ("#9333ea", "#f3e8ff")
         }
         color, bg = themes.get(theme, themes["gray"])

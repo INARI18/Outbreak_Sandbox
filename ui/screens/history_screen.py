@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
     QButtonGroup, QStackedWidget, QGraphicsDropShadowEffect
 )
 from ui.utils.base import NativeBase, create_icon, create_card, create_qicon
-from ui.components.header import StandardHeader
+from ui.components.common.header import StandardHeader
 import math
 
 class MockChartWidget(QFrame):

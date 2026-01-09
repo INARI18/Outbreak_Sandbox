@@ -1,0 +1,11 @@
+class Theme:
+    PRIMARY = "#0d9488"
+    SECONDARY = "#6366f1"
+    BACKGROUND_CARD = "#ffffff"
+    BACKGROUND_APP = "#f8fafc"
+    DANGER = "#ef4444"
+    WARNING = "#f59e0b"
+    SUCCESS = "#10b981"
+    TEXT_PRIMARY = "#0f172a"
+    TEXT_SECONDARY = "#64748b"
+    BORDER = "#e2e8f0"

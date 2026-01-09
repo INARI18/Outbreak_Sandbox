@@ -6,8 +6,10 @@ from PySide6.QtWidgets import (
 )
 from ui.utils.base import NativeBase, create_icon, create_card, create_qicon
 from ui.components import StandardHeader
-from ui.components.badge import Badge
-from ui.components.network_visualizer import NetworkVisualizer
+from ui.components.common.badge import Badge
+from ui.components.visualizers.network_visualizer import NetworkVisualizer
+from ui.components.execution.decision_log import DecisionLog
+from ui.components.execution.stats_overlay import StatsOverlay
 from infra.repositories.activity_repository import ActivityRepository
 from simulation.stop_conditions import check_stop
 import uuid
@@ -33,105 +35,22 @@ class SimulationExecutionDashboardScreen(NativeBase):
         grid.setContentsMargins(20, 20, 20, 20)
         grid.setSpacing(20)
         
-        # Column 1: Decision Engine (Left) - width ~25%
-        col1 = create_card()
-        col1.setFixedWidth(280)
-        col1_layout = QVBoxLayout(col1)
-        col1_layout.setContentsMargins(10, 15, 10, 15)
-        
-        # Header
-        c1_head = QHBoxLayout()
-        c1_head.addWidget(create_icon("neurology", 20, "#0d9488"))
-        c1_title = QLabel("DECISION ENGINE")
-        c1_title.setStyleSheet("font-weight: bold; font-size: 12px; letter-spacing: 0.5px;")
-        c1_head.addWidget(c1_title)
-
-        c1_head.addStretch()
-        self.live_badge = Badge("READY", theme="gray")
-        c1_head.addWidget(self.live_badge)
-        col1_layout.addLayout(c1_head)
-        
-        col1_layout.addWidget(QLabel("<hr style='color:#e2e8f0'>"))
-
-        # List of decisions
-        self.decision_list = QListWidget()
-        self.decision_list.setFrameShape(QFrame.NoFrame)
-        self.decision_list.setStyleSheet("""
-             QListWidget {
-                 background: transparent;
-                 outline: none;
-             }
-             QListWidget::item {
-                 border-bottom: 1px solid #f1f5f9;
-                 padding: 8px 0;
-             }
-             QListWidget::item:selected {
-                 background: transparent;
-                 color: inherit;
-             }
-        """)
-        self.decision_list.setWordWrap(True)
-        # avoid horizontal scrolling for long reasoning text
-        self.decision_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.decision_list.setSizeAdjustPolicy(QListWidget.AdjustToContents)
-        
-        col1_layout.addWidget(self.decision_list)
-        
-        # AI Mode Indication (Bottom of Col1)
-        bottom_row = QHBoxLayout()
-        
-        self.ai_mode_badge = Badge("CLOUD AI", theme="blue")
-        
-        bottom_row.addStretch()
-        bottom_row.addWidget(self.ai_mode_badge)
-        bottom_row.addStretch()
-        
-        col1_layout.addLayout(bottom_row)
-
-        grid.addWidget(col1)
+        # Column 1: Decision Engine (Left)
+        # Refactored into DecisionLog component
+        self.decision_log = DecisionLog()
+        grid.addWidget(self.decision_log)
         
         # Column 2: Network View (Center) - flexible width
         col2 = QFrame()
-        col2.setObjectName("card") # allow it to be a card too, or transparent
+        col2.setObjectName("card")
         col2.setStyleSheet("background: #e2e8f0; border-radius: 16px; border: 1px solid #cbd5e1;")
         col2_layout = QVBoxLayout(col2)
         
         # Overlay Stats inside the Graph View
+        # Refactored into StatsOverlay component
         top_stats = QHBoxLayout()
-        
-        self.lbl_infection_val = QLabel("0%")
-        self.lbl_infection_val.setStyleSheet("font-size: 18px; font-weight: 800; font-family: 'Space Grotesk'; color: #0d9488;")
-
-        self.lbl_step_val = QLabel("0")
-        self.lbl_step_val.setStyleSheet("font-size: 18px; font-weight: 800; font-family: 'Space Grotesk'; color: #0f172a;")
-        
-        self.lbl_nodes_val = QLabel("0")
-        self.lbl_nodes_val.setStyleSheet("font-size: 18px; font-weight: 800; font-family: 'Space Grotesk'; color: #0f172a;")
-
-
-        def glass_stat(label, val_widget, change=None):
-            f = QFrame()
-            # Changed border color to a slightly darker shade to stand out
-            # Remove white background border on label/val_widget
-            f.setStyleSheet("background: rgba(255,255,255,0.9); border-radius: 12px; border: 1px solid #cbd5e1;")
-            v = QVBoxLayout(f)
-            v.setContentsMargins(12, 8, 12, 8)
-            lbl = QLabel(label)
-            lbl.setStyleSheet("font-size: 10px; font-weight: bold; text-transform: uppercase; color: #64748b; background: transparent; border: none;")
-            val_box = QHBoxLayout()
-            val_widget.setStyleSheet(val_widget.styleSheet() + "background: transparent; border: none;")
-            val_box.addWidget(val_widget)
-            if change:
-                # Placeholder for trend
-                pass
-            v.addWidget(lbl)
-            v.addLayout(val_box)
-            return f
-
-        top_stats.addWidget(glass_stat("Infection", self.lbl_infection_val))
-        top_stats.addWidget(glass_stat("Step", self.lbl_step_val))
-        top_stats.addWidget(glass_stat("Nodes", self.lbl_nodes_val))
-        top_stats.addStretch()
+        self.stats_overlay = StatsOverlay()
+        top_stats.addWidget(self.stats_overlay)
         
         # Zoom controls
         zoom_col = QVBoxLayout()
@@ -141,7 +60,6 @@ class SimulationExecutionDashboardScreen(NativeBase):
         zoom_col.addWidget(z2)
         
         top_stats.addLayout(zoom_col)
-        
         col2_layout.addLayout(top_stats)
         
         # Network Visualizer

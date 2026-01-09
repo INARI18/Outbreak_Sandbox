@@ -26,9 +26,9 @@
 │   │   ├── simulation_repository.py            # Simulation state persistence
 │   │   ├── activity_repository.py              # Recent history
 │   │   └── virus_repository.py                 # Malware catalog
-│   └── llm/                                    # API Clients (Groq/Mock)
-│       ├── groq_client.py                      # Real AI integration
-│       └── mock_client.py                      # Fallback random behavior
+│   ├── providers/                              # AI Service Providers
+│   │   ├── groq_provider.py                    # Cloud AI integration (Groq)
+│   │   └── local_provider.py                   # Local Ai integretation ()
 ├── llm/                                        # AI Business Logic
 │   ├── parsers/                                # Response interpreters (JSON)
 │   ├── prompts/                                # Prompt engineering (txt)
@@ -47,11 +47,10 @@
     ├── app.py                                  # Qt application configuration
     ├── main_window.py                          # Navigation manager
     ├── components/                             # Reusable widgets
+    │   ├── common/                             # Shared components (Buttons, Headers, Dialogs)
     │   ├── home/                               # Home screen specific widgets
-    │   │   ...
-    │   ├── buttons.py                          # Custom buttons
-    │   ├── header.py                           # Standard app header
-    │   └── network_visualizer.py               # Graph rendering
+    │   ├── execution/                          # Execution dashboard components
+    │   └── visualizers/                        # Complex visualizers (Network Graph)
     ├── utils/                                  # Shared UI utilities (Icons, Base Classes)
     │   ├── base.py                             # Common widget bases
     │   └── generic_screen.py                   # Template for consistent screens
@@ -64,20 +63,31 @@
             ...
 ```
 
-## 🧠 AI Integration (Groq)
+## 🧠 AI Integration
 
-This project uses the **Groq** API to provide the virus "brain", allowing it to take decisions based on the current network state.
+### 1. Cloud AI (Groq API) - _Recommended_
 
-### API Key Configuration
+Connects to the ultra-fast Llama 3 models hosted by Groq. Requires an internet connection.
 
-To use the real AI, you need a Groq account (the free plan works) to get an access key.
+1.  **Get a Key:** Create a free account at [Groq Cloud](https://console.groq.com/) and generate an API Key.
+2.  **Configuration:**
+    - Open **Settings** (Gear icon in the header) or click **"API Key"**.
+    - Toggle "Use Local LLM" to **OFF**.
+    - Enter your API Key in the "Groq Cloud API Key" field.
+    - Click **Save**.
+3.  **Security Note:** Your API key is stored using your system's keyring service via the `keyring` Python library.
 
-1.  Create an account at [Groq Cloud](https://console.groq.com/).
-2.  Generate an API Key in the console.
-3.  **In the App:** When starting Outbreak Sandbox, click the **"API Key"** button on the home screen and paste your key.
-4.  **Alternatively (.env):** You can create a `.env` file in the project root with the content `GROQ_API_KEY=your_api_key`.
+### 2. Local AI (Microsoft Phi-3)
 
-If no key is configured, the system will automatically use a **Mock Client**. In this mode, the virus decisions will be random, with no AI reasoning, but ensuring the application works for interface testing.
+Runs entirely on your machine uses **Microsoft Phi-3-mini-4k-instruct** via Hugging Face `transformers`. Useful for offline usage.
+
+1.  **Configuration:**
+    - Open **Settings**.
+    - Toggle "Use Local LLM" to **ON**.
+    - If not manually downloaded via Settings, the system will download the model (approx 2GB) automatically on the first run.
+2.  **Dependencies:** Ensure you have `torch` and `transformers` installed.
+
+---
 
 ## 🏗️ Simulation Core
 
@@ -88,7 +98,7 @@ The `SimulationEngine` orchestrates time (steps) and checks stop conditions.
 #### Execution Flow
 
 1.  **Stop Check:** Checks if everyone is infected or time has run out.
-2.  **AI Query:** Sends the current network state to the LLM interface.
+2.  **AI Query:** Sends the current network state to the selected Provider (Groq or Local).
 3.  **Decision:** Receives instruction on which node to infect and which strategy to use.
 4.  **Propagation:** Calculates success based on virus attributes vs. node security.
 5.  **Visualization:** The UI is updated in real-time.
@@ -124,22 +134,23 @@ class Node:
 
 Propagation uses different attack strategies:
 
-1.  **Exploit (Default):** Balanced between Attack and Defense. Medium detection chance.
-2.  **Brute Force:** +50% attack, but ignores stealth. High detection chance.
-3.  **Phishing (Social Engineering):** Focuses on stealth. Very effective against human nodes (PCs), less effective against servers.
+1.  **Exploit (Default):** Balanced between Attack and Defense. Medium detection chance. Uses the virus's base `attack_power` against the node's `security_level`.
+2.  **Brute Force:** Increases attack power by **50%**, but drastically reduces stealth, increasing detection probability.
+3.  **Phishing (Social Engineering):** Ignores technical defenses of **PC/User** nodes, relying on the virus's `stealth` and randomness. Less effective against Servers or IoT devices.
 
 ## 🚀 Step-by-Step: Running a Simulation
 
-1.  **Start:** Upon opening the app, navigate to the configuration screen.
+1.  **Start:** Upon opening the app, navigate to the **Simulation Setup** wizard.
 2.  **Topology:** Choose the network shape (e.g., Mesh, Star, Grid) and the total number of nodes.
-3.  **Virus:** Select a virus from the predefined list. Each malware has its own characteristics of aggressiveness and stealth.
+3.  **Virus:** Select a virus from the predefined list (e.g., **WannaCry**, **Emotet**). Each malware has its own characteristics.
 4.  **Configuration:** Choose the simulation mode:
-    - **Stochastic:** Probabilistic results (role-playing).
-    - **Deterministic:** Fixed results based on a "Seed". Useful for replicating exact scenarios.
+    - **Stochastic:** Probabilistic results.
+    - **Deterministic:** Fixed results based on a "Seed".
 5.  **Execution:**
     - The main panel will display the network graph.
+    - The system will pause to load the necessary AI engine (Cloud or Local).
     - The simulation will automatically choose the first infected node.
-    - Follow the AI decision log in the side panel while the infection visually spreads through the network.
+    - Follow the AI decision log across the logic steps: **Target Selection** -> **Attack Validation** -> **Mutation Check**.
 
 ## 💻 Installation and Execution
 

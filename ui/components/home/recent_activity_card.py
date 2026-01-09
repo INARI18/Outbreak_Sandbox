@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtCore import Qt, Signal
 from ui.utils.base import create_pixmap
-from ui.components.badge import Badge
+from ui.components.common.badge import Badge
 
 class RecentActivityCard(QFrame):
     view_all_clicked = Signal()

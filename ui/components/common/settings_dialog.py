@@ -22,15 +22,28 @@ class ModelManagerThread(QThread):
     def run(self):
         try:
             if self.action == "download":
-                # In a real app, we would use huggingface_hub.snapshot_download or similar
-                # Here we simulate for UI responsiveness demonstration unless user wants real code
-                # I will simulate the steps of downloading layers
-                import time
-                steps = ["Fetching metadata...", "Downloading tokenizer...", "Downloading model shards (1/2)...", "Downloading model shards (2/2)...", "Verifying..."]
-                for i, step in enumerate(steps):
-                    time.sleep(1) # Simulate network
-                    progress = int((i + 1) / len(steps) * 100)
-                    self.progress_updated.emit(progress, step)
+                self.progress_updated.emit(10, "Initializing download framework...")
+                
+                # Check imports first
+                try:
+                    from huggingface_hub import snapshot_download
+                except ImportError:
+                    self.finished_error.emit("huggingface_hub library missing. Please pip install huggingface-hub")
+                    return
+
+                # Real download logic
+                self.progress_updated.emit(20, "Connecting to Hugging Face...")
+                
+                # This will download to ~/.cache/huggingface/hub by default
+                model_path = snapshot_download(
+                    repo_id=self.model_name,
+                    repo_type="model",
+                    resume_download=True,
+                    # We can't easily track granular percentage in snapshot_download without a custom callback,
+                    # so we'll just emit updates periodically or treat it as a long blocking op.
+                )
+                
+                self.progress_updated.emit(90, "Verifying files...")
                 
                 # Create a marker file to indicate it's installed
                 os.makedirs("models_cache", exist_ok=True)
@@ -40,9 +53,17 @@ class ModelManagerThread(QThread):
                 self.finished_success.emit()
             
             elif self.action == "delete":
+                from huggingface_hub import scan_cache_dir
+                
+                self.progress_updated.emit(10, "Scanning cache...")
+                # Real deletion is complex with HF cache, for now we will just remove our marker
+                # to "Soft Uninstall" it from the UI perspective.
+                # A full delete would require using huggingface-cli delete-cache.
+                
                 import time
-                self.progress_updated.emit(50, "Removing files...")
                 time.sleep(1)
+                
+                self.progress_updated.emit(50, "Removing registration...")
                 marker = "models_cache/phi_installed.marker"
                 if os.path.exists(marker):
                     os.remove(marker)

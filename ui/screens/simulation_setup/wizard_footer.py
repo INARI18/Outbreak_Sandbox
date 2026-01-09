@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QPushButton
 from PySide6.QtCore import Signal, Qt
-from ui.components.buttons import PrimaryButton
+from ui.components.common.buttons import PrimaryButton
 
 class WizardFooter(QFrame):
     back_clicked = Signal()

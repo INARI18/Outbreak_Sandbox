@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton
 from PySide6.QtCore import Qt
 from ui.utils.base import create_icon, create_qicon
-from ui.components.settings_dialog import SettingsDialog
+from ui.components.common.settings_dialog import SettingsDialog
 
 class Navbar(QFrame):
     def __init__(self, parent=None):
