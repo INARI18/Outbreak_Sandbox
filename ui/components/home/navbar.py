@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton
 from PySide6.QtCore import Qt
-from ui.screens.utils.base import create_icon, create_qicon
+from ui.utils.base import create_icon, create_qicon
+from ui.components.settings_dialog import SettingsDialog
 
 class Navbar(QFrame):
     def __init__(self, parent=None):
@@ -19,12 +20,24 @@ class Navbar(QFrame):
         brand_layout.addWidget(logo)
         brand_layout.addWidget(brand_text)
         
-        # Right Side (App Version)
-        user_layout = QHBoxLayout()
-        version_lbl = QLabel("v1.0.2-alpha")
-        version_lbl.setStyleSheet("color: #cbd5e1; font-family: 'Space Grotesk'; font-size: 13px; font-weight: 500;")
-        user_layout.addWidget(version_lbl)
-
+        # Right Side
         layout.addLayout(brand_layout)
         layout.addStretch()
-        layout.addLayout(user_layout)
+
+        # Settings
+        settings_btn = QPushButton()
+        settings_btn.setIcon(create_qicon("settings", 20, "#64748b"))
+        settings_btn.setFixedSize(40, 40)
+        settings_btn.setCursor(Qt.PointingHandCursor)
+        settings_btn.setStyleSheet("background: transparent; border: none; border-radius: 20px;")
+        settings_btn.clicked.connect(self.open_settings)
+        layout.addWidget(settings_btn)
+        
+        # App Version
+        version_lbl = QLabel("v1.0")
+        version_lbl.setStyleSheet("color: #cbd5e1; font-family: 'Space Grotesk'; font-size: 13px; font-weight: 500; margin-left: 10px;")
+        layout.addWidget(version_lbl)
+
+    def open_settings(self):
+        dlg = SettingsDialog(self)
+        dlg.exec()

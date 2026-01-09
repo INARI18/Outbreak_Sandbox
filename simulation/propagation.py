@@ -9,11 +9,6 @@ class PropagationSystem:
         """
         Calculates infection outcome based on Virus Stats vs Node Defense 
         and the chosen Attack Strategy.
-        
-        Strategies:
-        - "brute_force": Boosts Attack, disregards Stealth. High Noise (Detection Risk).
-        - "phishing": Boosts Stealth. Good vs Humans, bad vs Automated Systems. Low Noise.
-        - "exploit": Balanced approach using standard stats.
         """
         rng = DeterministicPolicy.get()
         
@@ -45,22 +40,31 @@ class PropagationSystem:
         
         if strategy == AttackStrategy.BRUTE_FORCE:
             effective_attack = atk * 1.5
-            infection_chance = effective_attack - defense
+            infection_chance = 0.1 + (effective_attack - defense)
             detection_chance = 0.6
             
         elif strategy == AttackStrategy.PHISHING:
             human_nodes = ["home_pc", "corp_workstation"]
             
-            if target_node.type in human_nodes:
-                effective_attack = stl * 1.4  # Bonus vs Humans
-            else:
-                effective_attack = stl * 0.5  # Penalty vs IoT/Server
-                
-            infection_chance = effective_attack - defense
-            detection_chance = 0.1  # Very low noise
+            # HARD BLOCK: Phishing requires a human user
+            if target_node.type not in human_nodes:
+                return {
+                    "success": False,
+                    "detected": True,
+                    "reason": "phishing_logic_error_no_human",
+                    "infection_score": 0.0
+                }
+            
+            # Bonus vs Humans
+            effective_attack = stl * 1.4
+            
+            # Base 20% + diff
+            infection_chance = 0.2 + (effective_attack - defense)
+            detection_chance = 0.1 
         
         else: # exploit strategy (default)
-            infection_chance = (atk - defense) + rng.uniform(-0.1, 0.1)
+            # Base 25% + (Atk - Def) + Variance
+            infection_chance = 0.25 + (atk - defense) + rng.uniform(-0.05, 0.05)
             detection_chance = 0.3
             
         # 4. Final Calculation
@@ -70,6 +74,10 @@ class PropagationSystem:
         roll = rng.random()
         
         if infection_chance > 0 and roll < infection_chance:
+            target_node.infect()
+            status = "infected"
+            success = True
+        elif roll < 0.05: # Minimal 5% success chance 
             target_node.infect()
             status = "infected"
             success = True

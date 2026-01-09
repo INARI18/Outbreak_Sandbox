@@ -1,352 +1,361 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QPainter, QColor, QFont, QPen, QPainterPath
 from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, 
-    QGridLayout, QWidget, QScrollArea, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit
+    QGridLayout, QWidget, QScrollArea, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit,
+    QButtonGroup, QStackedWidget, QGraphicsDropShadowEffect
 )
-from ui.screens.utils.base import NativeBase, create_icon, create_card, create_qicon
+from ui.utils.base import NativeBase, create_icon, create_card, create_qicon
+from ui.components.header import StandardHeader
+import math
+
+class MockChartWidget(QFrame):
+    def __init__(self, title, color="#0d9488", mode="line"):
+        super().__init__()
+        self.title = title
+        self.base_color = QColor(color)
+        self.mode = mode
+        self.setStyleSheet("background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;")
+        self.setMinimumHeight(180)
+    
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Draw Title
+        painter.setPen(QColor("#475569"))
+        font = painter.font()
+        font.setFamily("Space Grotesk")
+        font.setBold(True)
+        font.setPointSize(10)
+        painter.setFont(font)
+        painter.drawText(20, 30, self.title)
+        
+        # Draw Chart Area
+        rect_x, rect_y, rect_w, rect_h = 20, 50, self.width() - 40, self.height() - 70
+        
+        # Axes
+        painter.setPen(QPen(QColor("#cbd5e1"), 1))
+        painter.drawLine(rect_x, rect_y + rect_h, rect_x + rect_w, rect_y + rect_h) # X axis
+        painter.drawLine(rect_x, rect_y, rect_x, rect_y + rect_h) # Y axis
+        
+        if self.mode == "line":
+            self._draw_line_chart(painter, rect_x, rect_y, rect_w, rect_h)
+        else:
+            self._draw_bar_chart(painter, rect_x, rect_y, rect_w, rect_h)
+
+    def _draw_line_chart(self, painter, x, y, w, h):
+        path = QPainterPath()
+        path.moveTo(x, y + h)
+        
+        step = w / 20
+        for i in range(21):
+            px = x + (i * step)
+            # Create a nice curve
+            val = math.sin(i * 0.5) * 0.5 + 0.5 # 0 to 1
+            # Add some randomness based on position to make it look like data
+            val = (val + math.sin(i * 2.3) * 0.2) 
+            val = max(0.1, min(0.9, val))
+            
+            py = y + h - (val * h)
+            path.lineTo(px, py)
+            
+        painter.setPen(QPen(self.base_color, 2))
+        painter.drawPath(path)
+        
+        # Fill
+        path.lineTo(x + w, y + h)
+        path.lineTo(x, y + h)
+        c = QColor(self.base_color)
+        c.setAlpha(40)
+        painter.fillPath(path, c)
+
+    def _draw_bar_chart(self, painter, x, y, w, h):
+        count = 8
+        bar_w = (w / count) * 0.6
+        gap = (w / count) * 0.4
+        
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(self.base_color)
+        
+        for i in range(count):
+            bx = x + (i * (bar_w + gap)) + gap/2
+            # varied heights
+            val = (math.sin(i * 123.45) + 1) / 2 # 0-1 pseudo random
+            val = 0.2 + (val * 0.7)
+            bh = val * h
+            by = y + h - bh
+            
+            painter.drawRoundedRect(bx, by, bar_w, bh, 4, 4)
 
 class SimulationHistoryProfilesScreen(NativeBase):
     def __init__(self):
         super().__init__()
-        
-        self._build_navbar()
-        
-        # Main Layout
-        self.main = QScrollArea()
-        self.main.setWidgetResizable(True)
-        self.main.setFrameShape(QFrame.NoFrame)
-        self.content = QWidget()
-        self.content_layout = QVBoxLayout(self.content)
-        self.content_layout.setContentsMargins(40, 40, 40, 40)
-        self.content_layout.setSpacing(30)
-        self.main.setWidget(self.content)
         
         # Container
         self.container_layout = QVBoxLayout(self)
         self.container_layout.setContentsMargins(0,0,0,0)
         self.container_layout.setSpacing(0)
         
-        # Build Navbar first and add to container
-        self._build_navbar()
+        # Header
+        self.header = StandardHeader(
+            title="Saved Simulations",
+            subtitle="Review logs, analyze metrics, and manage your simulation history.",
+            show_dashboard_btn=True
+        )
+        self.header.dashboard_requested.connect(self.dashboard_requested.emit)
+        self.container_layout.addWidget(self.header)
+        
+        # Main Layout
+        self.main = QScrollArea()
+        self.main.setWidgetResizable(True)
+        self.main.setFrameShape(QFrame.NoFrame)
+        self.main.setStyleSheet("background: #f8fafc;") # Global bg
+        
+        self.content = QWidget()
+        self.content_layout = QHBoxLayout(self.content)
+        self.content_layout.setContentsMargins(40, 40, 40, 40)
+        self.content_layout.setSpacing(30)
+        self.main.setWidget(self.content)
 
         self.container_layout.addWidget(self.main)
 
-        # Header
-        h_box = QVBoxLayout()
-        title = QLabel("Simulation History & Profiles")
-        title.setStyleSheet("font-size: 24px; font-weight: 800; color: #1e293b; letter-spacing: -0.5px;")
+        # LEFT COLUMN (Table)
+        self._build_table_panel()
         
-        sub = QLabel("Manage experiment logs, review analysis reports, and configure custom virus definitions.")
-        sub.setStyleSheet("color: #64748b; font-size: 14px; margin-top: 4px;")
-        
-        h_box.addWidget(title)
-        h_box.addWidget(sub)
-        self.content_layout.addLayout(h_box)
+        # RIGHT COLUMN (Stats)
+        self._build_stats_panel()
 
-        # Grid Content
-        grid = QGridLayout()
-        grid.setSpacing(30)
+        # Connect signals
+        self.table.itemSelectionChanged.connect(self._on_selection_changed)
+
+    def _build_table_panel(self):
+        left_panel = QVBoxLayout()
+        left_panel.setSpacing(20)
         
-        # --- LEFT: Simulation Logs ---
-        logs_card = create_card()
-        logs_card.setStyleSheet("background: white; border-radius: 16px; border: 1px solid #e2e8f0;")
+        # 1. Filters & Search
+        top_bar = QHBoxLayout()
         
-        lc_lay = QVBoxLayout(logs_card)
-        lc_lay.setContentsMargins(0,0,0,0)
+        # Exclusive Filter Buttons
+        self.filter_group = QButtonGroup(self)
+        self.filter_group.setExclusive(True)
         
-        # Logs Header
-        lh = QHBoxLayout()
-        lh.setContentsMargins(24, 24, 24, 16)
+        filters = ["All Logs", "Deterministic", "Stochastic", "Last 24h"]
         
-        lh_icon = QFrame()
-        lh_icon.setFixedSize(36, 36)
-        lh_icon.setStyleSheet("background: #f1f5f9; border-radius: 10px;")
-        lil = QVBoxLayout(lh_icon); lil.setContentsMargins(0,0,0,0); lil.setAlignment(Qt.AlignCenter)
-        lil.addWidget(create_icon("table_chart", 20, "#475569"))
+        filter_container = QHBoxLayout()
+        filter_container.setSpacing(8)
         
-        lh_title = QLabel("Simulation Logs")
-        lh_title.setStyleSheet("font-weight: 800; font-size: 16px; color: #1e293b;")
-        
-        search = QLineEdit()
-        search.setPlaceholderText("Search logs...")
-        search.setFixedWidth(240)
-        search.setStyleSheet("""
-            QLineEdit {
-                border-radius: 18px; 
-                padding: 6px 16px; 
-                border: 1px solid #e2e8f0; 
-                background: #f8fafc;
-                font-size: 13px;
-            }
-            QLineEdit:focus {
-                border: 1px solid #0d9488;
-                background: white;
-            }
-        """)
-        
-        lh.addWidget(lh_icon)
-        lh.addSpacing(12)
-        lh.addWidget(lh_title)
-        lh.addStretch()
-        lh.addWidget(search)
-        lc_lay.addLayout(lh)
-        
-        # Filters
-        lf = QHBoxLayout()
-        lf.setContentsMargins(24, 0, 24, 16)
-        for f in ["ALL LOGS", "DETERMINISTIC", "STOCHASTIC", "LAST 24H"]:
+        for i, f in enumerate(filters):
             btn = QPushButton(f)
             btn.setCheckable(True)
             btn.setCursor(Qt.PointingHandCursor)
-            if f == "ALL LOGS": 
-                btn.setChecked(True)
-                btn.setStyleSheet("""
-                    QPushButton { background: #0f172a; color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 11px; font-weight: bold; }
-                """)
-            else:
-                btn.setStyleSheet("""
-                    QPushButton { background: white; color: #64748b; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 12px; font-size: 11px; font-weight: bold; }
-                    QPushButton:hover { background: #f8fafc; color: #334155; }
-                    QPushButton:checked { background: #e2e8f0; color: #1e293b; }
-                """)
-            lf.addWidget(btn)
-        lf.addStretch()
-        lc_lay.addLayout(lf)
+            btn.setFixedHeight(36)
+            # Default style
+            btn.setStyleSheet("""
+                QPushButton {
+                    background: white; border: 1px solid #e2e8f0; border-radius: 18px; 
+                    padding: 0 20px; color: #64748b; font-weight: 600; font-size: 13px;
+                }
+                QPushButton:hover { border-color: #cbd5e1; color: #475569; }
+                QPushButton:checked {
+                    background: #0f172a; border: 1px solid #0f172a; color: white;
+                }
+            """)
+            if i == 0: btn.setChecked(True)
+            self.filter_group.addButton(btn)
+            filter_container.addWidget(btn)
+            
+        filter_container.addStretch()
+        top_bar.addLayout(filter_container)
         
-        # Table
-        table = QTableWidget()
-        table.setColumnCount(6)
-        table.setHorizontalHeaderLabels(["ID", "DATE / TIME", "TOPOLOGY", "VIRUS", "MODE", "ACTION"])
-        table.verticalHeader().setVisible(False)
-        table.setShowGrid(False)
-        table.setFrameShape(QFrame.NoFrame)
-        table.setFocusPolicy(Qt.NoFocus)
-        table.setSelectionMode(QTableWidget.NoSelection)
+        # Search
+        search = QLineEdit()
+        search.setPlaceholderText("Search by ID or Topology...")
+        search.setFixedWidth(240)
+        search.setFixedHeight(36)
+        search.setStyleSheet("""
+            QLineEdit {
+                border-radius: 18px; 
+                padding: 0 16px; 
+                border: 1px solid #e2e8f0; 
+                background: white;
+                font-size: 13px;
+                color: #334155;
+            }
+            QLineEdit:focus {
+                border: 1px solid #0d9488;
+            }
+        """)
+        top_bar.addWidget(search)
         
-        table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
-        table.horizontalHeader().setStyleSheet("""
+        left_panel.addLayout(top_bar)
+        
+        # 2. Table Card
+        table_card = create_card()
+        # Ensure it has a white bg and shadow
+        eff = QGraphicsDropShadowEffect(blurRadius=15, xOffset=0, yOffset=4, color=QColor(0,0,0,10))
+        table_card.setGraphicsEffect(eff)
+        
+        tc_layout = QVBoxLayout(table_card)
+        tc_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.table = QTableWidget()
+        self.table.setColumnCount(4)
+        self.table.setHorizontalHeaderLabels(["SIMULATION ID", "DATE", "TOPOLOGY", "STATUS"])
+        self.table.verticalHeader().setVisible(False)
+        self.table.setShowGrid(False)
+        self.table.setFrameShape(QFrame.NoFrame)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SingleSelection)
+        self.table.setFocusPolicy(Qt.NoFocus)
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        
+        # Header Style
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.Stretch)
+        header.setFixedHeight(45)
+        header.setStyleSheet("""
             QHeaderView::section {
                 background-color: #f8fafc;
-                padding: 12px 24px;
-                border: none;
-                border-bottom: 1px solid #e2e8f0;
+                color: #64748b;
                 font-weight: bold;
                 font-size: 11px;
-                color: #64748b;
+                border: none;
+                border-bottom: 1px solid #e2e8f0;
+                padding-left: 16px;
                 text-align: left;
             }
         """)
         
-        table.setStyleSheet("""
+        # Table Body Style
+        self.table.setStyleSheet("""
             QTableWidget {
-                background: white; border: none;
+                background: white;
+                border-radius: 12px;
+                selection-background-color: #f0fdf4;
+                selection-color: #1e293b;
             }
-            QTableWidget::item { 
-                padding: 12px 24px; 
-                border-bottom: 1px solid #f1f5f9; 
-                color: #334155; 
-                font-size: 13px;
-            } 
+            QTableWidget::item {
+                border-bottom: 1px solid #f1f5f9;
+                padding-left: 16px;
+                color: #334155;
+            }
         """)
         
-        rows = [
-            ("#SIM-849", "Oct 24, 14:00", "Mesh Network (n=50)", "Polymorphic-Worm-A", "Stochastic"),
-            ("#SIM-848", "Oct 24, 09:30", "Star Topology (n=20)", "Trojan.Win32.Test", "Deterministic"),
-            ("#SIM-847", "Oct 23, 18:15", "Scale-Free (n=100)", "Ransomware-X", "Stochastic"),
-            ("#SIM-846", "Oct 22, 11:45", "Mesh Network (n=50)", "Botnet-Seed-Alpha", "Deterministic"),
-            ("#SIM-845", "Oct 21, 14:20", "Ring Topology (n=25)", "Worm.Gen.V4", "Stochastic"),
-        ]
+        # Connect selection
+        # Moved to __init__ to ensure stats_stack is ready
+        # self.table.itemSelectionChanged.connect(self._on_selection_changed)
         
-        table.setRowCount(len(rows))
-        for r, row_data in enumerate(rows):
-            for c, txt in enumerate(row_data):
-                if c == 0: # ID
-                    lbl = QLabel(txt)
-                    lbl.setStyleSheet("font-family: 'Monaco', monospace; font-weight: bold; color: #0d9488;")
-                    table.setCellWidget(r, c, lbl)
-                elif c == 4:
-                    w = QWidget()
-                    wl = QHBoxLayout(w); wl.setContentsMargins(0,0,0,0); wl.setAlignment(Qt.AlignLeft)
-                    lbl = QLabel(txt)
-                    if txt == "Stochastic":
-                        lbl.setStyleSheet("background: #f0f9ff; color: #0369a1; font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: bold;")
-                    else:
-                        lbl.setStyleSheet("background: #fdf2f8; color: #be185d; font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: bold;")
-                    wl.addWidget(lbl)
-                    table.setCellWidget(r, c, w)
-                else:
-                    table.setItem(r, c, QTableWidgetItem(txt))
-            
-            # Action buttons
-            act_w = QWidget()
-            al = QHBoxLayout(act_w)
-            al.setContentsMargins(0,0,0,0)
-            al.setSpacing(4)
-            
-            b1 = QPushButton()
-            b1.setIcon(create_qicon("visibility", 18, "#64748b"))
-            b1.setFlat(True)
-            b1.setCursor(Qt.PointingHandCursor)
-            
-            b2 = QPushButton()
-            b2.setIcon(create_qicon("download", 18, "#64748b"))
-            b2.setFlat(True)
-            b2.setCursor(Qt.PointingHandCursor)
-            
-            al.addWidget(b1); al.addWidget(b2)
-            table.setCellWidget(r, 5, act_w)
-
-        lc_lay.addWidget(table)
+        # Populate Mock Data
+        self._populate_mock_data()
+        
+        tc_layout.addWidget(self.table)
         
         # Pagination
-        pag = QHBoxLayout()
-        pag.setContentsMargins(24, 16, 24, 24)
-        pag.addWidget(QLabel("Showing 1-5 of 48 simulations"))
-        pag.addStretch()
+        pag_layout = QHBoxLayout()
+        pag_layout.setContentsMargins(20, 15, 20, 15)
+        pag_lbl = QLabel("Showing 5 of 12 simulations")
+        pag_lbl.setStyleSheet("color: #94a3b8; font-size: 12px; font-weight: 500;")
+        pag_layout.addWidget(pag_lbl)
+        pag_layout.addStretch()
         
-        p1 = QPushButton("Previous")
-        p1.setEnabled(False)
-        p1.setStyleSheet("background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 12px; color: #94a3b8;")
+        for lbl in ["Previous", "Next"]:
+            b = QPushButton(lbl)
+            b.setCursor(Qt.PointingHandCursor)
+            b.setStyleSheet("QPushButton { border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 12px; color: #475569; background: white; } QPushButton:hover { background: #f8fafc; }")
+            pag_layout.addWidget(b)
+            
+        tc_layout.addLayout(pag_layout)
         
-        p2 = QPushButton("Next")
-        p2.setStyleSheet("background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 12px; color: #1e293b;")
+        left_panel.addWidget(table_card)
         
-        pag.addWidget(p1); pag.addWidget(p2)
-        lc_lay.addLayout(pag)
+        # Add to main
+        self.content_layout.addLayout(left_panel, 2)
+
+    def _build_stats_panel(self):
+        right_panel = QVBoxLayout()
+        right_panel.setSpacing(15)
         
-        grid.addWidget(logs_card, 0, 0)
+        title = QLabel("Analytics Preview")
+        title.setObjectName("h3")
+        title.setStyleSheet("font-size: 18px; font-weight: 800; color: #1e293b;")
+        right_panel.addWidget(title)
         
-        # --- RIGHT: Virus Library ---
-        lib_col = QVBoxLayout()
+        # Stacked Widget to show Placeholder OR Charts
+        self.stats_stack = QStackedWidget()
         
-        # Header
-        lib_h = QHBoxLayout()
-        t = QLabel("Virus Library")
-        t.setStyleSheet("font-size: 18px; font-weight: 800; color: #1e293b;")
-        lib_h.addWidget(t)
-        lib_h.addStretch()
+        # Page 0: Placeholder
+        page_placeholder = create_card()
+        page_placeholder.setStyleSheet("background: white; border-radius: 12px; border: 1px dashed #cbd5e1;")
+        pp_layout = QVBoxLayout(page_placeholder)
+        pp_layout.setAlignment(Qt.AlignCenter)
+        pp_layout.setSpacing(10)
         
-        add = QPushButton(" + New ")
-        add.setCursor(Qt.PointingHandCursor)
-        add.setStyleSheet("""
-            QPushButton {
-                background: #0f172a; color: white; border-radius: 8px; font-weight: bold; padding: 6px 12px; font-size: 12px;
-            }
-            QPushButton:hover {
-                background: #1e293b;
-            }
-        """)
-        lib_h.addWidget(add)
-        lib_col.addLayout(lib_h)
-        lib_col.addSpacing(16)
+        icon = create_icon("analytics", 48, "#cbd5e1")
+        lbl = QLabel("Select a simulation")
+        lbl.setStyleSheet("color: #94a3b8; font-weight: bold; font-size: 16px;")
+        sub = QLabel("Click on a row in the table\nto view detailed statistics.")
+        sub.setAlignment(Qt.AlignCenter)
+        sub.setStyleSheet("color: #cbd5e1; font-size: 13px;")
         
-        # Cards
-        viruses = [
-            ("Trojan.Win32.Test.v2", "USER-DEFINED", "Modified payload specifically designed to test firewall latency.", "1.2 (High)", "200ms", "#10b981"),
-            ("Worm.Aggressive.B", "STANDARD LIBRARY", "Standard aggressive worm pattern for stress-testing mesh topologies.", "2.4 (Severe)", "50ms", "#6366f1"),
-            ("Custom_Ransom_01", "USER-DEFINED", "Simulates node locking behavior after T+1000s.", "0.5 (Low)", "500ms", "#f43f5e"),
+        pp_layout.addStretch()
+        pp_layout.addWidget(icon)
+        pp_layout.addWidget(lbl)
+        pp_layout.addWidget(sub)
+        pp_layout.addStretch()
+        
+        self.stats_stack.addWidget(page_placeholder)
+        
+        # Page 1: Charts Container
+        page_charts = QWidget()
+        pc_layout = QVBoxLayout(page_charts)
+        pc_layout.setContentsMargins(0,0,0,0)
+        pc_layout.setSpacing(20)
+        
+        # Chart 1: Infection Curve
+        self.chart1 = MockChartWidget("Infection Spread (Active Nodes)", "#0d9488", "line")
+        pc_layout.addWidget(self.chart1)
+        
+        # Chart 2: Latency/Load
+        self.chart2 = MockChartWidget("Network Load Distribution", "#6366f1", "bar")
+        pc_layout.addWidget(self.chart2)
+        
+        pc_layout.addStretch()
+        
+        self.stats_stack.addWidget(page_charts)
+        
+        right_panel.addWidget(self.stats_stack)
+        
+        self.content_layout.addLayout(right_panel, 1)
+
+    def _populate_mock_data(self):
+        data = [
+            ("SIM-902", "Jan 08, 14:20", "Mesh (n=50)", "Completed"),
+            ("SIM-901", "Jan 08, 11:05", "Star (n=20)", "Completed"),
+            ("SIM-899", "Jan 07, 16:45", "Scale-Free (n=100)", "Failed"),
+            ("SIM-895", "Jan 06, 09:30", "Grid (n=64)", "Completed"),
+            ("SIM-882", "Jan 05, 13:15", "Ring (n=30)", "Completed"),
         ]
         
-        for name, tag, desc, prop, lat, color in viruses:
-            vc = create_card()
-            vc.setStyleSheet("background: white; border-radius: 12px; border: 1px solid #e2e8f0;")
+        self.table.setRowCount(len(data))
+        for r, (sid, date, topo, status) in enumerate(data):
+            self.table.setItem(r, 0, QTableWidgetItem(sid))
+            self.table.setItem(r, 1, QTableWidgetItem(date))
+            self.table.setItem(r, 2, QTableWidgetItem(topo))
             
-            vl = QVBoxLayout(vc)
-            vl.setContentsMargins(20, 20, 20, 20)
+            # Status badge-like text
+            s_item = QTableWidgetItem(status)
+            if status == "Completed":
+                s_item.setForeground(QColor("#059669"))
+            else:
+                s_item.setForeground(QColor("#ef4444"))
+            s_item.setFont(QFont("Space Grotesk", 10, QFont.Bold))
+            self.table.setItem(r, 3, s_item)
             
-            vh = QHBoxLayout()
-            
-            # Colored Indicator
-            ind = QFrame()
-            ind.setFixedSize(12, 12)
-            ind.setStyleSheet(f"background: {color}; border-radius: 6px;")
-            
-            vt = QLabel(name)
-            vt.setStyleSheet("font-weight: 800; font-size: 14px; color: #1e293b;")
-            
-            vh.addWidget(ind)
-            vh.addSpacing(8)
-            vh.addWidget(vt)
-            vh.addStretch()
-            
-            # Small pill tag
-            tag_pill = QLabel(tag.replace("-", " "))
-            tag_pill.setStyleSheet("font-size: 9px; font-weight: bold; color: #64748b; background: #f1f5f9; padding: 4px 6px; border-radius: 4px;")
-            vh.addWidget(tag_pill)
-            
-            vl.addLayout(vh)
-            
-            vl.addSpacing(12)
-            d = QLabel(desc)
-            d.setWordWrap(True)
-            d.setStyleSheet("color: #64748b; font-size: 12px; line-height: 1.4;")
-            vl.addWidget(d)
-            
-            vl.addSpacing(16)
-            
-            # Stats row
-            stats = QHBoxLayout()
-            
-            def make_stat(lbl, val):
-                c = QVBoxLayout()
-                c.setSpacing(2)
-                l = QLabel(lbl)
-                l.setStyleSheet("font-size: 10px; font-weight: bold; color: #94a3b8; text-transform: uppercase;")
-                v = QLabel(val)
-                v.setStyleSheet("font-size: 12px; font-weight: bold; color: #334155;")
-                c.addWidget(l); c.addWidget(v)
-                return c
-                
-            stats.addLayout(make_stat("R0 / Spread", prop))
-            stats.addSpacing(20)
-            stats.addLayout(make_stat("Latency", lat))
-            stats.addStretch()
-            
-            vl.addLayout(stats)
-            lib_col.addWidget(vc)
-            lib_col.addSpacing(12)
-            
-        lib_col.addStretch()
-        
-        grid.addLayout(lib_col, 0, 1)
-        grid.setColumnStretch(0, 2) # Logs wider
-        grid.setColumnStretch(1, 1) # Virus narrower
-        
-        self.content_layout.addLayout(grid)
-        self.content_layout.addStretch()
-
-    def _build_navbar(self):
-        nav = QFrame()
-        nav.setStyleSheet("background: white; border-bottom: 1px solid #e2e8f0;")
-        nav.setFixedHeight(70)
-        l = QHBoxLayout(nav)
-        l.setContentsMargins(30, 0, 30, 0)
-        
-        logo = create_icon("hub", 26, "#0d9488")
-        title = QLabel("Outbreak Sandbox")
-        title.setStyleSheet("font-family: 'Space Grotesk'; font-weight: bold; font-size: 16px;")
-        
-        l.addWidget(logo)
-        l.addWidget(title)
-        l.addStretch()
-        
-        back = QPushButton(" Dashboard")
-        back.setIcon(create_qicon("arrow_back", 18, "#334155"))
-        back.setCursor(Qt.PointingHandCursor)
-        back.setStyleSheet("""
-            QPushButton {
-                background: transparent; color: #334155; font-weight: bold; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 12px;
-            }
-            QPushButton:hover {
-                background: #f1f5f9; border-color: #94a3b8;
-            }
-        """)
-        back.clicked.connect(lambda: self.back_requested.emit())
-        l.addWidget(back)
-        
-        if hasattr(self, 'container_layout'):
-            self.container_layout.insertWidget(0, nav)
-
-
+    def _on_selection_changed(self):
+        # If selection exists, show stats
+        indexes = self.table.selectedIndexes()
+        if indexes:
+            self.stats_stack.setCurrentIndex(1)
+        else:
+            self.stats_stack.setCurrentIndex(0)

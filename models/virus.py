@@ -57,7 +57,6 @@ class Virus:
 class VirusFactory:
     @staticmethod
     def _map_targets(priority: str) -> list[str]:
-        # Maps abstract priorities to concrete node_type IDs from node_types.json
         mapping = {
             # Aggressive / Spread Fast (e.g. WannaCry) - targets almost everything
             "spread_fast": ["home_pc", "corp_workstation", "legacy_system", "cloud_server", "iot_device", "mainframe"],
@@ -68,11 +67,11 @@ class VirusFactory:
             # IoT / Botnet (e.g. Mirai)
             "weak_credentials": ["iot_device", "legacy_system"],
             
-            # Standard
+            # Standard / Balanced (e.g. Emotet)
             "balanced_spread": ["home_pc", "corp_workstation", "cloud_server"],
             "corporate_networks": ["corp_workstation", "cloud_server", "mainframe"],
             
-            # Special
+            # Special / High Security Targets (e.g. APTs)
             "air_gapped_systems": ["legacy_system", "mainframe"] 
         }
         return mapping.get(priority, [])

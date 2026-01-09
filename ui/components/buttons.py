@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QPushButton
 from PySide6.QtCore import Qt
-from ui.screens.utils.base import create_qicon
+from ui.utils.base import create_qicon
 
 class PrimaryButton(QPushButton):
     def __init__(self, text="", icon_name=None, height=54):

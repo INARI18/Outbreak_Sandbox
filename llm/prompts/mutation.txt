@@ -26,28 +26,16 @@ Rules:
 Return ONLY valid JSON:
 
 If no mutation:
-{
+{{
   "mutate": false,
   "reason": "Current strategy is working fine."
-}
+}}
 
 If mutation:
-{
+{{
   "mutate": true,
   "type": "stat_boost" | "adaptation",
   "target_parameter": "attack_power" | "spread_rate" | "stealth" | "target_hosts",
   "change_value": 0.5 (for stats) or "iot_device" (for adaptation),
   "reason": "Increasing attack to overcome high defense."
-}
-}
-
-If mutation:
-{
-  "mutate": true,
-  "changes": {
-    "attack": <float>,
-    "spread": <float>,
-    "stealth": <float>
-  },
-  "reason": "<short explanation>"
-}
+}}

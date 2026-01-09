@@ -16,7 +16,7 @@ class Network:
     @property
     def security_level(self) -> float:
         """
-        Dynamically calculates the current network security level.
+        calculates the current network security level
         """
         if not self.nodes:
             return 0.0
@@ -28,7 +28,7 @@ class Network:
             else:
                 total_defense += node.security_level
                 
-        return round(total_defense / len(self.nodes), 4)
+        return round(total_defense / len(self.nodes), 2)
 
     def add_node(self, node: Node):
         self.nodes[node.id] = node
@@ -39,5 +39,6 @@ class Network:
     def infected_nodes(self) -> list[Node]:
         return [node for node in self.nodes.values() if node.is_infected]
 
+    # TODO: need to change that when quarantine is implemented   
     def healthy_nodes(self) -> list[Node]:
-        return [n for n in self.nodes.values() if not n.is_infected]
+        return [node for node in self.nodes.values() if not node.is_infected]

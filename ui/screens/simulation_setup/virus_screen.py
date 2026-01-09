@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QButtonGroup, QWidget
 )
 from PySide6.QtCore import Qt
-from ui.screens.utils.base import create_icon, create_qicon
+from ui.utils.base import create_icon, create_qicon
 from .base_wizard import WizardScreen
 
 class VirusSelectionScreen(WizardScreen):
@@ -23,11 +23,11 @@ class VirusSelectionScreen(WizardScreen):
     def _load_viruses(self):
         """Load viruses from JSON and map UI properties based on type."""
         try:
-            # Assuming viruses.json is in the project root
-            file_path = os.path.join(os.getcwd(), 'viruses.json')
+            # Assuming viruses.json is in config/ directory
+            file_path = os.path.join(os.getcwd(), 'config/viruses.json')
             if not os.path.exists(file_path):
                  # Fallback if running from a different dir look up one level
-                 file_path = os.path.join(os.getcwd(), '..', 'viruses.json')
+                 file_path = os.path.join(os.getcwd(), '..', 'config/viruses.json')
 
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
@@ -361,6 +361,17 @@ class VirusSelectionScreen(WizardScreen):
             return None
         v = next((item for item in self.viruses_data if item["id"] == self.selected_virus_id), None)
         return v['name'] if v else None
+
+    def reset(self):
+        self.selected_virus_id = None
+        self.current_page = 0
+        self.current_filter = "All Types"
+        self._render_page()
+        if hasattr(self, 'footer'):
+             self.footer.next_btn.setEnabled(False)
+
+    def is_complete(self) -> bool:
+        return self.selected_virus_id is not None
 
     def _add_stat(self, layout, label, val, color):
         row = QHBoxLayout()

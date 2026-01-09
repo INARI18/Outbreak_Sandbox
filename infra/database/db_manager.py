@@ -2,7 +2,7 @@ import sqlite3
 import os
 
 class DBManager:
-    def __init__(self, db_path: str = "simulation_history.db"):
+    def __init__(self, db_path: str = "data/simulation_history.db"):
         self.db_path = db_path
         self._initialize_schema()
 

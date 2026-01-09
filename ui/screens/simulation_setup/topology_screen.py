@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (
     QLabel, QGridLayout, QPushButton, QVBoxLayout, QFrame, QHBoxLayout, QSlider, QSizePolicy, QButtonGroup
 )
 from PySide6.QtCore import Qt
-from ui.screens.utils.base import create_icon, create_card
+from ui.utils.base import create_icon, create_card
 from .base_wizard import WizardScreen
 
 class TopologySelectionScreen(WizardScreen):
@@ -140,9 +140,9 @@ class TopologySelectionScreen(WizardScreen):
         info_col = QVBoxLayout()
         info_col.setSpacing(4)
         lbl = QLabel("Network Scale")
-        lbl.setStyleSheet("font-weight: 800; font-size: 14px; color: #0f172a;")
+        lbl.setStyleSheet("font-weight: 800; font-size: 14px; color: #0f172a; border: none;")
         sub = QLabel("Adjust the number of nodes in the simulation graph.")
-        sub.setStyleSheet("color: #64748b; font-size: 12px;")
+        sub.setStyleSheet("color: #64748b; font-size: 12px; border: none;")
         info_col.addWidget(lbl)
         info_col.addWidget(sub)
         
@@ -158,7 +158,7 @@ class TopologySelectionScreen(WizardScreen):
                 border-radius: 4px;
             }
             QSlider::handle:horizontal {
-                background: #0d9488;
+                background: #0f172a;
                 border: 2px solid white; 
                 width: 20px;
                 height: 20px;
@@ -168,13 +168,13 @@ class TopologySelectionScreen(WizardScreen):
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }
             QSlider::sub-page:horizontal {
-                background: #0d9488;
+                background: #0f172a;
                 border-radius: 4px;
             }
         """)
         
         val_lbl = QLabel(" 50 Nodes ")
-        val_lbl.setFixedWidth(80)
+        val_lbl.setFixedWidth(110)
         val_lbl.setAlignment(Qt.AlignCenter)
         val_lbl.setStyleSheet("background: #0f172a; color: white; padding: 6px 10px; border-radius: 8px; font-weight: bold; font-family: 'Space Grotesk';")
         slider.valueChanged.connect(lambda v: val_lbl.setText(f" {v} Nodes "))
@@ -195,3 +195,23 @@ class TopologySelectionScreen(WizardScreen):
         # Enable next when a topology is chosen
         self.group.buttonClicked.connect(lambda _: self.footer.next_btn.setEnabled(True))
         self.content_layout.addStretch()
+
+    def reset(self):
+        """Reset the screen to its initial state."""
+        # Uncheck all buttons
+        if self.group.checkedButton():
+            self.group.setExclusive(False)
+            self.group.checkedButton().setChecked(False)
+            self.group.setExclusive(True)
+        
+        # Reset scale slider
+        if hasattr(self, 'scale_slider'):
+            self.scale_slider.setValue(50)
+            
+        # Disable next button if possible (handled by signal usually but good to enforce)
+        if hasattr(self, 'footer'):
+             self.footer.next_btn.setEnabled(False)
+
+    def is_complete(self) -> bool:
+        """Check if a topology is selected."""
+        return self.group.checkedButton() is not None

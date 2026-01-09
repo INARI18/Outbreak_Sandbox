@@ -1,8 +1,10 @@
-from PySide6.QtWidgets import QGraphicsView, QGraphicsScene
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsItem
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QBrush, QPen, QColor, QPainter
 
 class NetworkVisualizer(QGraphicsView):
+    node_clicked = Signal(str)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.scene = QGraphicsScene(self)
@@ -60,12 +62,23 @@ class NetworkVisualizer(QGraphicsView):
             x, y = pos
             ellipse = self.scene.addEllipse(x - radius, y - radius, radius * 2, radius * 2)
             ellipse.setPen(QPen(Qt.white, 2))
+            ellipse.setFlag(QGraphicsItem.ItemIsSelectable)
+            ellipse.setData(0, node_id)
             self.update_node_color(ellipse, self.network.nodes[node_id].status)
             ellipse.setZValue(1)
             self.node_items[node_id] = ellipse
             
         # Center view
         self.scene.setSceneRect(-scale*1.5, -scale*1.5, scale*3, scale*3)
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        if event.button() == Qt.LeftButton:
+            item = self.scene.itemAt(self.mapToScene(event.pos()), self.transform())
+            if item:
+                nid = item.data(0)
+                if nid:
+                    self.node_clicked.emit(str(nid))
 
     def update_node_color(self, item, status):
         if status == "healthy":

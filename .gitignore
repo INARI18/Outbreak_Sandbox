@@ -25,3 +25,6 @@ Thumbs.db
 *.log
 *.db
 recent_activity.json
+
+# Local AI Models
+models_cache/

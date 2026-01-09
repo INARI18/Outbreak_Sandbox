@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFrame
 from PySide6.QtCore import Qt, Signal
-from ui.screens.utils.base import create_icon, create_qicon
+from ui.utils.base import create_icon, create_qicon
 
 class SavedSimulationsWidget(QPushButton):
     clicked_signal = Signal()

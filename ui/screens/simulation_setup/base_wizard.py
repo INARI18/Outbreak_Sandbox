@@ -1,9 +1,10 @@
 from PySide6.QtWidgets import (
     QVBoxLayout, QWidget, QScrollArea, QFrame
 )
-from ui.screens.utils.base import NativeBase
-from ui.components import StandardHeader, WizardFooter
+from ui.utils.base import NativeBase
+from ui.components import StandardHeader
 from .wizard_header import WizardHeader
+from .wizard_footer import WizardFooter
 
 class WizardScreen(NativeBase):
     def __init__(self, step_index):

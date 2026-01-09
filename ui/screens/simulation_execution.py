@@ -1,13 +1,13 @@
-from PySide6.QtCore import Qt, QTimer, QSize
+from PySide6.QtCore import Qt, QTimer, QSize, QSettings
 from PySide6.QtGui import QFont, QFontMetrics
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QListWidget,
     QListWidgetItem, QFrame, QLineEdit, QMessageBox, QDialog, QListView
 )
-from ui.screens.utils.base import NativeBase, create_icon, create_card, create_qicon
+from ui.utils.base import NativeBase, create_icon, create_card, create_qicon
 from ui.components import StandardHeader
+from ui.components.badge import Badge
 from ui.components.network_visualizer import NetworkVisualizer
-from infra.repositories.stats_repository import StatsRepository
 from infra.repositories.activity_repository import ActivityRepository
 from simulation.stop_conditions import check_stop
 import uuid
@@ -24,8 +24,7 @@ class SimulationExecutionDashboardScreen(NativeBase):
         layout.setContentsMargins(0, 0, 0, 0)
         
         # --- Navbar ---
-        self.header = StandardHeader(subtitle="Scenario: Setup Pending...")
-        # Intercept dashboard clicks to confirm stopping the running simulation
+        self.header = StandardHeader(subtitle="Scenario: Setup Pending...", show_settings_btn=False)
         self.header.dashboard_requested.connect(self._confirm_exit_to_dashboard)
         layout.addWidget(self.header)
         
@@ -46,9 +45,9 @@ class SimulationExecutionDashboardScreen(NativeBase):
         c1_title = QLabel("DECISION ENGINE")
         c1_title.setStyleSheet("font-weight: bold; font-size: 12px; letter-spacing: 0.5px;")
         c1_head.addWidget(c1_title)
+
         c1_head.addStretch()
-        self.live_badge = QLabel(" READY ")
-        self.live_badge.setStyleSheet("background: #f1f5f9; color: #64748b; font-size: 10px; font-weight: bold; border-radius: 4px; padding: 2px;")
+        self.live_badge = Badge("READY", theme="gray")
         c1_head.addWidget(self.live_badge)
         col1_layout.addLayout(c1_head)
         
@@ -78,16 +77,16 @@ class SimulationExecutionDashboardScreen(NativeBase):
         
         col1_layout.addWidget(self.decision_list)
         
-        # Prompt Input
-        input_row = QHBoxLayout()
-        inp = QLineEdit()
-        inp.setPlaceholderText("Ask about AI reasoning...")
-        send_btn = QPushButton()
-        send_btn.setText("->") 
-        send_btn.setFixedSize(32, 32)
-        input_row.addWidget(inp)
-        input_row.addWidget(send_btn)
-        col1_layout.addLayout(input_row)
+        # AI Mode Indication (Bottom of Col1)
+        bottom_row = QHBoxLayout()
+        
+        self.ai_mode_badge = Badge("CLOUD AI", theme="blue")
+        
+        bottom_row.addStretch()
+        bottom_row.addWidget(self.ai_mode_badge)
+        bottom_row.addStretch()
+        
+        col1_layout.addLayout(bottom_row)
 
         grid.addWidget(col1)
         
@@ -148,6 +147,7 @@ class SimulationExecutionDashboardScreen(NativeBase):
         # Network Visualizer
         self.visualizer = NetworkVisualizer()
         self.visualizer.setStyleSheet("background: transparent; border: none;")
+        self.visualizer.node_clicked.connect(self._on_node_clicked)
         col2_layout.addWidget(self.visualizer)
         
         # Bottom controls (Play/Pause)
@@ -295,7 +295,8 @@ class SimulationExecutionDashboardScreen(NativeBase):
 
     def set_engine(self, engine):
         self.engine = engine
-        self.decision_list.clear()
+        self._setup_initial_state()
+        self.update_ai_badge() # Force update badge when engine is set
         
         virus_name = engine.virus.name
         network_type = engine.topology_type if hasattr(engine, 'topology_type') else "Network"
@@ -417,7 +418,7 @@ class SimulationExecutionDashboardScreen(NativeBase):
         result = self.engine.step()
         # Defensive: ensure result is a dict
         if not isinstance(result, dict):
-            self.add_event_item('error', f"Step {self.engine.current_step}: Engine returned invalid result")
+            self.add_event_item('error', f"Step {self.engine.current_step}: Engine returned invalid result", step=self.engine.current_step)
             return
 
         self.update_stats_ui()
@@ -441,20 +442,20 @@ class SimulationExecutionDashboardScreen(NativeBase):
 
             # Check for LLM rate limit or context errors specifically
             if "limit" in str(err).lower() or "token" in str(err).lower() or "429" in str(err):
-               self.add_event_item('llm_error', f"Step {step_num}: LLM Resource Limit - {err}")
+               self.add_event_item('llm_error', f"Step {step_num}: LLM Resource Limit - {err}", step=step_num)
                self.add_decision(f"Step {step_num}", "LLM PAUSED", f"Limit Reached: {error_detail}", "memory", "#f59e0b")
             else:
-               self.add_event_item('error', f"Step {step_num}: ERROR - {err}")
+               self.add_event_item('error', f"Step {step_num}: ERROR - {err}", step=step_num)
                self.add_decision(f"Step {step_num}", "SYSTEM ERROR", error_detail, "error", "#ef4444")
 
         else:
             # Mutation
             if result.get('mutated'):
-                self.add_event_item('mutation', f"Step {step_num}: Mutation executed")
+                self.add_event_item('mutation', f"Step {step_num}: Mutation executed", step=step_num)
 
             # Infection attempt
             if success:
-                self.add_event_item('infection', f"Step {step_num}: Infection - Node {target}")
+                self.add_event_item('infection', f"Step {step_num}: Infection - Node {target}", step=step_num)
                 node = self.engine.network.get_node(str(target))
                 if node:
                     self.update_node_inspector(node)
@@ -465,7 +466,7 @@ class SimulationExecutionDashboardScreen(NativeBase):
                 self.add_decision(f"Step {step_num}", title, reason, icon, color)
 
             else:
-                self.add_event_item('attack_blocked', f"Step {step_num}: Attack blocked ({src} -> {target})")
+                self.add_event_item('attack_blocked', f"Step {step_num}: Attack blocked ({src} -> {target})", step=step_num)
                 
                 icon = "shield" # Changed from block for distinction
                 color = "#94a3b8" 
@@ -504,7 +505,7 @@ class SimulationExecutionDashboardScreen(NativeBase):
         # Backwards-compatible simple API, maps to rich item
         self.add_event_item('info', text)
 
-    def add_event_item(self, event_type: str, text: str):
+    def add_event_item(self, event_type: str, text: str, step: int = None):
         """Add a rich event item matching the new design."""
         
         # Color & Icon Map
@@ -553,7 +554,11 @@ class SimulationExecutionDashboardScreen(NativeBase):
         title_lbl = QLabel("System Log" if event_type == 'info' else event_type.replace('_', ' ').title())
         title_lbl.setStyleSheet(f"font-weight: bold; color: #1e293b; font-size: 13px;")
         
-        step_val = self.engine.current_step if self.engine else 0
+        if step is not None:
+             step_val = step
+        else:
+             step_val = self.engine.current_step if self.engine else 0
+             
         time_badge = QLabel(f"Step: {step_val}")
         time_badge.setStyleSheet("background: #f1f5f9; color: #64748b; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold;")
         
@@ -734,3 +739,32 @@ class SimulationExecutionDashboardScreen(NativeBase):
             repo.log_activity(sim_id, topo_type, total, virus_name, rate)
         except Exception as e:
             print(f"Failed to log activity: {e}")
+
+    def _on_node_clicked(self, node_id):
+        if not self.engine or not self.engine.network:
+            return
+        node = self.engine.network.get_node(node_id)
+        if node:
+            self.update_node_inspector(node)
+
+    def update_ai_badge(self):
+        settings = QSettings("OutbreakSandbox", "Config")
+        use_local = settings.value("use_local_llm", False, type=bool)
+        
+        if use_local:
+            self.ai_mode_badge.setText("LOCAL AI")
+            self.ai_mode_badge.set_theme("yellow")
+        else:
+            self.ai_mode_badge.setText("CLOUD AI")
+            self.ai_mode_badge.set_theme("blue") 
+
+    def _setup_initial_state(self):
+        self.decision_list.clear()
+        self.event_list.clear() # If event_list exists, otherwise remove this line.
+        # Checking file content earlier, self.event_list exists.
+        
+        self.is_running = False
+        self.timer.stop()
+        self.play_btn.setText(create_icon("play_circle", 32).text())
+        self.live_badge.setText(" READY ")
+        self.live_badge.setStyleSheet("background: #f1f5f9; color: #64748b; font-size: 10px; font-weight: bold; border-radius: 4px; padding: 2px;")

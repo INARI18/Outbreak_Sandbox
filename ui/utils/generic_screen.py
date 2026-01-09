@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QVBoxLayout, QLabel, QPushButton, QHBoxLayout
-from ui.screens.utils.base import NativeBase
+from ui.utils.base import NativeBase
 
 class GenericStyledScreen(NativeBase):
     def __init__(self, title_text):

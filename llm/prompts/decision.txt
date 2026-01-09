@@ -13,18 +13,21 @@ Virus:
 - Impact: {virus[impact]}
 
 Network state:
-- Infected nodes: {network[infected_nodes]}
-- Healthy nodes: {network[healthy_nodes]}
+- Infected nodes (IDs): {network[infected_nodes]}
+- Healthy nodes (IDs): {network[healthy_nodes]}
 
 Adjacency (neighbors for each node):
 {network[adjacency_text]}
 
 Task:
-Choose ONE infected node and ONE connected healthy node to attempt infection. You MUST ensure the target node is directly connected (a neighbor) of the chosen source node.
+You MUST choose ONE node from the "Infected nodes" list as the 'source_node'.
+You MUST choose ONE node from the "Healthy nodes" list as the 'target_node'.
+CRITICAL: The 'target_node' MUST be listed as a neighbor of the 'source_node' in the Adjacency list.
+If the Source node has no Healthy neighbors, choose a different Source node.
 
 Respond ONLY in JSON:
 {{
-  "source_node": "<id>",
-  "target_node": "<id>",
+  "source_node": "<id_from_infected_list>",
+  "target_node": "<id_from_healthy_list_connected_to_source>",
   "reasoning": "<short explanation>"
 }}

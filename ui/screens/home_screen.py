@@ -2,25 +2,25 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QWidget, QScrollArea, QFrame, QGridLayout
 )
 from PySide6.QtCore import Signal
-from ui.screens.utils.base import NativeBase
+from ui.utils.base import NativeBase
 
-from infra.repositories.stats_repository import StatsRepository
 from infra.repositories.activity_repository import ActivityRepository
 
 # Components
 from ui.components.home.navbar import Navbar
 from ui.components.home.welcome_hero import WelcomeHeader
 from ui.components.home.simulation_hub_card import SimulationHubCard
-from ui.components.home.system_readiness_card import SystemReadinessCard
+from ui.components.home.configuration_workflow_card import ConfigurationWorkflowCard
 from ui.components.home.recent_activity_card import RecentActivityCard
 from ui.components.home.right_panel_widgets import SavedSimulationsWidget, VirusRepositoryWidget, DocumentationWidget
 
 class HomeScreen(NativeBase):
     history_requested = Signal()
+    new_simulation_requested = Signal()
+    continue_simulation_requested = Signal()
 
     def __init__(self):
         super().__init__()
-        self.stats_repo = StatsRepository()
         self.repo = ActivityRepository()
         
         # Main Layout
@@ -53,13 +53,13 @@ class HomeScreen(NativeBase):
 
         # Card 1: Simulation Hub
         hub_card = SimulationHubCard()
-        hub_card.new_simulation_clicked.connect(lambda: self.next_requested.emit())
+        hub_card.new_simulation_clicked.connect(lambda: self.new_simulation_requested.emit())
         grid.addWidget(hub_card, 0, 0, 1, 2)
         
-        # Card 2: System Readiness
-        readiness_card = SystemReadinessCard()
-        readiness_card.continue_clicked.connect(lambda: self.next_requested.emit())
-        grid.addWidget(readiness_card, 1, 0, 1, 2)
+        # Card 2: Configuration Workflow
+        self.config_card = ConfigurationWorkflowCard()
+        self.config_card.continue_clicked.connect(lambda: self.continue_simulation_requested.emit())
+        grid.addWidget(self.config_card, 1, 0, 1, 2)
 
         # Card 3: Recent Activity
         self.recent_activity = RecentActivityCard()
@@ -95,3 +95,11 @@ class HomeScreen(NativeBase):
     def refresh_data(self):
         activities = self.repo.load_activities()
         self.recent_activity.update_data(activities)
+
+    def showEvent(self, event):
+        self.refresh_data()
+        super().showEvent(event)
+
+    def update_workflow_status(self, topo_done: bool, virus_done: bool, config_done: bool):
+        """Update the configuration card with the latest status from wizard screens."""
+        self.config_card.update_progress(topo_done, virus_done, config_done)

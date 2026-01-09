@@ -8,26 +8,16 @@ from models.node import Node
 from infra.repositories.node_type_repository import NodeTypeRepository
 
 
-def graph_to_network(
-    G: nx.Graph,
-    network_id: str = "generated-net",
-    topology: str = "unknown",
-    security_level: Optional[float] = None,
+def graph_to_network(G: nx.Graph, network_id: str = "generated-net", topology: str = "unknown", security_level: Optional[float] = None,
 ) -> Network:
-    """Convert a networkx.Graph into a `Network` containing `Node`s.
-
-    Nodes in the returned Network will have string IDs equal to their integer
-    node labels from G (converted to str). Edges are treated as undirected
-    connections and will be added bidirectionally to each Node.connected_nodes.
-    """
+    """Convert a networkx.Graph into a Network"""
     node_count = G.number_of_nodes()
     
     # Load Node Types
-    repo = NodeTypeRepository("node_types.json")
+    repo = NodeTypeRepository("config/node_types.json")
     try:
         available_types = repo.load_all()
     except Exception:
-        # Fallback if json not found or error
         available_types = []
 
     # Determine types per node
@@ -66,7 +56,6 @@ def graph_to_network(
 
     network = Network(id=network_id, topology=topology, size=node_count, security_level=final_network_security)
 
-    # Ensure deterministic ordering of nodes (use sorted by current labels)
     nodes = list(G.nodes())
     
     pos = nx.spring_layout(G, scale=1.0, seed=42)

@@ -5,10 +5,9 @@ from datetime import datetime
 class ActivityRepository:
     """
     Manages Recent Activity logs for simulations.
-    Persists data to 'recent_activity.json' in the project root.
     Keeps only the last 6 entries.
     """
-    FILE_NAME = "recent_activity.json"
+    FILE_NAME = "data/recent_activity.json"
 
     def __init__(self, root_dir=None):
         self.root = root_dir if root_dir else os.getcwd()

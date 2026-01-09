@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QLineEdit, QCheckBox, QFrame, QSizePolicy
 )
 from PySide6.QtCore import Qt
-from ui.screens.utils.base import create_card, create_icon, create_pixmap
+from ui.utils.base import create_card, create_icon, create_pixmap
 from .base_wizard import WizardScreen
 
 class SimulationConfigurationScreen(WizardScreen):
@@ -23,7 +23,8 @@ class SimulationConfigurationScreen(WizardScreen):
         
         card = create_card()
         # Ensure card has a specific background for visibility on white
-        card.setStyleSheet("QFrame#card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; }")
+        # Make texts inside transparent background
+        card.setStyleSheet("QFrame#card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; } QLabel { background: transparent; }")
         
         cl = QVBoxLayout(card)
         cl.setContentsMargins(40,40,40,40)
@@ -33,7 +34,7 @@ class SimulationConfigurationScreen(WizardScreen):
         ml = QHBoxLayout()
         ico = create_icon("shuffle", 24, "#0d9488")
         circle = QLabel("1")
-        circle.setStyleSheet("background: #0d9488; color: white; border-radius: 12px; font-weight: bold; min-width: 24px; min-height: 24px; qproperty-alignment: AlignCenter;")
+        circle.setStyleSheet("background: #0d9488; color: #ffffff; border-radius: 12px; font-weight: bold; min-width: 24px; min-height: 24px; qproperty-alignment: AlignCenter;")
         
         lbl = QLabel("Simulation Mode")
         lbl.setStyleSheet("font-weight: bold; font-size: 16px; background: transparent;")
@@ -96,6 +97,8 @@ class SimulationConfigurationScreen(WizardScreen):
         self.seed_input.setStyleSheet("QLineEdit { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; font-family: monospace; } QLineEdit:disabled { background: #f1f5f9; color: #94a3b8; }")
         # By default seed input is disabled until Deterministic mode is selected
         self.seed_input.setEnabled(False)
+        self.seed_input.setPlaceholderText("Random Seed")
+        self.seed_input.textChanged.connect(self.on_interaction)
 
         # Add a small dice button to generate a random seed
         seed_row = QHBoxLayout()
@@ -136,6 +139,7 @@ class SimulationConfigurationScreen(WizardScreen):
             dice_btn.setEnabled(is_det)
 
         self.mode_group.buttonClicked.connect(_toggle_seed_on_mode)
+        self.mode_group.buttonClicked.connect(self.on_interaction)
         
         # 3. Execution
         el = QHBoxLayout()
@@ -172,15 +176,34 @@ class SimulationConfigurationScreen(WizardScreen):
         self.content_layout.addWidget(card)
         self.content_layout.addStretch()
 
-    def get_mode(self):
-        """Return 'stochastic' or 'deterministic'."""
+    def reset(self):
+        self.is_modified = False
+        # Reset selection: Clear all
+        self.mode_group.setExclusive(False)
+        for btn in self.mode_group.buttons():
+            btn.setChecked(False)
+        self.mode_group.setExclusive(True)
+        
+        # Disable Next button again
+        try:
+            self.footer.next_btn.setEnabled(False)
+        except Exception:
+            pass
+        
+        # New random seed
+        if hasattr(self, 'seed_input'):
+            self.seed_input.setText(str(random.randint(1000, 9999)))
+            self.seed_input.setEnabled(False)
+
+    def is_complete(self) -> bool:
+        return self.mode_group.checkedButton() is not None
+    
+    def on_interaction(self):
+        self.is_modified = True
+
+    def get_mode(self) -> str:
         btn = self.mode_group.checkedButton()
-        if btn:
-            return btn.property("mode_key")
-        return None
+        return btn.property("mode_key") if btn else "stochastic"
 
-    def get_seed(self):
-        return self.seed_input.text()
-
-    def is_step_mode(self):
-        return self.step_toggle.isChecked()
+    def get_seed(self) -> str:
+        return self.seed_input.text().strip().strip()

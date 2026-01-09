@@ -32,11 +32,11 @@ class SimulationHubCard(QFrame):
         text_col.setSpacing(6)
         
         hub_title = QLabel("Simulation Hub")
-        hub_title.setStyleSheet("font-weight: 800; font-size: 18px; color: #1e293b; border: none;")
+        hub_title.setStyleSheet("font-weight: 800; font-size: 18px; color: #1e293b; border: none; background: transparent;")
         
         desc_lbl = QLabel("Start a new outbreak scenario using our advanced deterministic or stochastic engines.")
         desc_lbl.setWordWrap(True)
-        desc_lbl.setStyleSheet("color: #64748b; font-size: 14px; border: none;")
+        desc_lbl.setStyleSheet("color: #64748b; font-size: 14px; border: none; background: transparent;")
         
         text_col.addWidget(hub_title)
         text_col.addWidget(desc_lbl)

@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout, QLabel
 from PySide6.QtCore import Qt
-from ui.screens.utils.base import create_pixmap
+from ui.utils.base import create_pixmap
 
 class WizardHeader(QFrame):
     def __init__(self, step_index, parent=None):

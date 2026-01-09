@@ -1,10 +1,13 @@
+import os
+import json
 from PySide6.QtWidgets import (
     QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QWidget, 
     QTableWidget, QHeaderView, QTableWidgetItem, QGraphicsDropShadowEffect
 )
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtCore import Qt, Signal
-from ui.screens.utils.base import create_pixmap
+from ui.utils.base import create_pixmap
+from ui.components.badge import Badge
 
 class RecentActivityCard(QFrame):
     view_all_clicked = Signal()
@@ -20,6 +23,17 @@ class RecentActivityCard(QFrame):
             }
         """)
         
+        self.virus_type_map = self._load_virus_data()
+        self.type_colors = {
+            "ransomware": ("#ef4444", "#fef2f2"),
+            "worm":       ("#f59e0b", "#fffbeb"),
+            "botnet":     ("#6366f1", "#e0e7ff"),
+            "trojan":     ("#8b5cf6", "#f3e8ff"),
+            "spyware":    ("#ec4899", "#fce7f3"),
+            "adware":     ("#10b981", "#d1fae5"),
+        }
+
+        
         # Shadow
         eff = QGraphicsDropShadowEffect(blurRadius=15, xOffset=0, yOffset=4, color=QColor(0,0,0,15))
         self.setGraphicsEffect(eff)
@@ -31,7 +45,7 @@ class RecentActivityCard(QFrame):
         # Header Row
         h_row = QHBoxLayout()
         rc_title = QLabel("Recent Activity")
-        rc_title.setStyleSheet("font-weight: 800; font-size: 18px; color: #1e293b; border: none;")
+        rc_title.setStyleSheet("font-weight: 800; font-size: 18px; color: #1e293b; border: none; background: transparent;")
         
         h_row.addWidget(rc_title)
         h_row.addStretch()
@@ -45,6 +59,22 @@ class RecentActivityCard(QFrame):
         self.layout.addWidget(self.table_container)
         
         self.setMinimumHeight(250)
+
+    def _load_virus_data(self):
+        """Loads virus map name->type"""
+        mapping = {}
+        try:
+            path = os.path.join(os.getcwd(), 'config/viruses.json')
+            if not os.path.exists(path):
+                path = os.path.join(os.getcwd(), '..', 'config/viruses.json')
+            
+            with open(path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                for v in data.get('viruses', []):
+                    mapping[v['name']] = v['type']
+        except Exception:
+            pass
+        return mapping
 
     def update_data(self, activities):
         # Clear existing
@@ -90,9 +120,11 @@ class RecentActivityCard(QFrame):
         table.setColumnCount(4)
         table.setHorizontalHeaderLabels(["SIMULATION ID", "TOPOLOGY", "VIRUS", "INFECTION RATE"])
         table.verticalHeader().setVisible(False)
+        table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         table.setShowGrid(False)
         table.setFrameShape(QFrame.NoFrame)
         table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        table.horizontalHeader().setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         table.horizontalHeader().setStyleSheet("""
             QHeaderView::section {
                 background-color: white;
@@ -100,16 +132,17 @@ class RecentActivityCard(QFrame):
                 font-weight: bold;
                 border: none;
                 border-bottom: 2px solid #f1f5f9;
-                padding: 8px;
-                text-align: center;
+                padding: 12px;
+                text-align: left;
             }
         """)
         table.setStyleSheet("""
             QTableWidget { border: none; background: white; gridline-color: transparent; }
-            QTableWidget::item { padding: 12px 5px; border-bottom: 1px solid #f1f5f9; color: #475569; }
+            QTableWidget::item { padding: 12px 12px; border-bottom: 1px solid #f1f5f9; color: #475569; }
             QTableWidget::item:selected { background: transparent; color: inherit; }
         """)
         table.setFocusPolicy(Qt.NoFocus)
+
         table.setSelectionMode(QTableWidget.NoSelection)
         table.setAlternatingRowColors(True)
         table.setStyleSheet(table.styleSheet() + "QTableWidget { alternate-background-color: #f8fafc; }")
@@ -124,19 +157,31 @@ class RecentActivityCard(QFrame):
         id_item = QTableWidgetItem(item.get("id", "Unknown"))
         id_item.setToolTip(f"Run Date: {item.get('date')}")
         id_item.setForeground(Qt.black)
-        id_item.setTextAlignment(Qt.AlignCenter)
+        id_item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         f = QFont()
         f.setBold(True)
         id_item.setFont(f) 
         
         topo_item = QTableWidgetItem(item.get("topology", "—"))
-        topo_item.setTextAlignment(Qt.AlignCenter)
-        virus_item = QTableWidgetItem(item.get("virus", "—"))
-        virus_item.setTextAlignment(Qt.AlignCenter)
+        topo_item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        
+        # Virus Badge
+        virus_name = item.get("virus", "—")
+        virus_type = self.virus_type_map.get(virus_name, "unknown")
+        color, bg = self.type_colors.get(virus_type, ("#64748b", "#f1f5f9"))
+        
+        badge_widget = QWidget()
+        badge_widget.setStyleSheet("background: transparent;")
+        bw_layout = QHBoxLayout(badge_widget)
+        bw_layout.setContentsMargins(12, 0, 0, 0)
+        bw_layout.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        badge = Badge(text=virus_name, color=color, bg_color=bg)
+        bw_layout.addWidget(badge)
+        bw_layout.addStretch()
         
         rate_str = item.get("infection_rate", "0%")
         rate_item = QTableWidgetItem(rate_str)
-        rate_item.setTextAlignment(Qt.AlignCenter)
+        rate_item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         
         try:
             val = float(rate_str.replace("%", ""))
@@ -155,5 +200,5 @@ class RecentActivityCard(QFrame):
 
         table.setItem(row, 0, id_item)
         table.setItem(row, 1, topo_item)
-        table.setItem(row, 2, virus_item)
+        table.setCellWidget(row, 2, badge_widget)
         table.setItem(row, 3, rate_item)
