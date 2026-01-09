@@ -1,4 +1,5 @@
 import keyring
+from datetime import datetime
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QScrollArea,
@@ -33,12 +34,10 @@ class WelcomeScreen(NativeBase):
         # Badge
         badge = QFrame()
         badge.setStyleSheet("background: rgba(255,255,255,0.6); border: 1px solid #ccfbf1; border-radius: 20px;")
-
         badge.setFixedSize(320, 40) 
         badge_layout = QHBoxLayout(badge)
         badge_layout.setContentsMargins(15, 0, 15, 0)
         dot = QLabel("●")
-
         dot.setStyleSheet("color: #10b981; font-size: 12px; border: none; background: transparent;")
         txt = QLabel("V1.0 SIMULATION ENGINE READY")
         txt.setStyleSheet("color: #0d9488; font-weight: bold; font-size: 12px; letter-spacing: 1.5px; border: none; background: transparent;")
@@ -65,35 +64,20 @@ class WelcomeScreen(NativeBase):
 
         # Buttons
         btn_row = QHBoxLayout()
-        self.start_btn = PrimaryButton("  Start Simulation", "play_circle", height=64)
+        self.start_btn = PrimaryButton("  Launch Sandbox", "play_circle", height=64)
         self.start_btn.setFixedWidth(260)
         self.start_btn.setStyleSheet(self.start_btn.styleSheet() + "font-size: 18px;")
         self.start_btn.clicked.connect(lambda: self.next_requested.emit())
-        
-        settings_btn = QPushButton("  Settings")
-        settings_btn.setIcon(create_qicon("settings", 24, "#334155"))
-        settings_btn.setFixedSize(200, 64)
-        settings_btn.setCursor(Qt.PointingHandCursor)
-        settings_btn.setStyleSheet("""
-            QPushButton {
-                background: white; border: 1px solid #cbd5e1; border-radius: 12px;
-                font-size: 16px; font-weight: bold; color: #334155;
-            }
-            QPushButton:hover { background: #f1f5f9; border-color: #94a3b8; }
-        """)
-        settings_btn.clicked.connect(self.open_settings)
-        
         btn_row.addStretch()
         btn_row.addWidget(self.start_btn)
-        btn_row.addSpacing(20)
-        btn_row.addWidget(settings_btn)
         btn_row.addStretch()
         content_layout.addLayout(btn_row)
 
         content_layout.addStretch()
 
         # Footer
-        footer = QLabel("© 2026 Outbreak Sandbox v1.0 Open source software.")
+        current_year = datetime.now().year
+        footer = QLabel(f"© {current_year} Outbreak Sandbox v1.0 Open source software.")
         footer.setStyleSheet("color: #94a3b8; font-size: 12px;")
         content_layout.addWidget(footer, 0, Qt.AlignCenter)
 

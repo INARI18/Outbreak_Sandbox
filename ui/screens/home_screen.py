@@ -6,13 +6,12 @@ from ui.utils.base import NativeBase
 
 from infra.repositories.activity_repository import ActivityRepository
 
-# Components
-from ui.components.home.navbar import Navbar
-from ui.components.home.welcome_hero import WelcomeHeader
 from ui.components.home.simulation_hub_card import SimulationHubCard
 from ui.components.home.configuration_workflow_card import ConfigurationWorkflowCard
 from ui.components.home.recent_activity_card import RecentActivityCard
 from ui.components.home.right_panel_widgets import SavedSimulationsWidget, VirusRepositoryWidget, DocumentationWidget
+from ui.components.home.navbar import Navbar
+from ui.components.home.welcome_hero import WelcomeHeader
 
 class HomeScreen(NativeBase):
     history_requested = Signal()
@@ -39,6 +38,7 @@ class HomeScreen(NativeBase):
         scroll.setStyleSheet("background: #f8fafc;")
         
         content = QWidget()
+    # ...existing code...
         content_layout = QVBoxLayout(content)
         content_layout.setContentsMargins(40, 40, 40, 40)
         content_layout.setSpacing(30)
@@ -49,7 +49,7 @@ class HomeScreen(NativeBase):
 
         # Dashboard Grid
         grid = QGridLayout()
-        grid.setSpacing(20)
+        grid.setSpacing(32)
 
         # Card 1: Simulation Hub
         hub_card = SimulationHubCard()
@@ -79,10 +79,13 @@ class HomeScreen(NativeBase):
         doc_widget = DocumentationWidget()
         grid.addWidget(doc_widget, 2, 2, 1, 1)
 
-        # Grid column stretch
-        grid.setColumnStretch(0, 3)
-        grid.setColumnStretch(1, 3)
-        grid.setColumnStretch(2, 2) 
+        # Grid column and row stretch
+        grid.setColumnStretch(0, 2)
+        grid.setColumnStretch(1, 2)
+        grid.setColumnStretch(2, 2)
+        grid.setRowStretch(0, 1)
+        grid.setRowStretch(1, 1)
+        grid.setRowStretch(2, 1)
 
         content_layout.addLayout(grid)
         content_layout.addStretch()
@@ -101,5 +104,4 @@ class HomeScreen(NativeBase):
         super().showEvent(event)
 
     def update_workflow_status(self, topo_done: bool, virus_done: bool, config_done: bool):
-        """Update the configuration card with the latest status from wizard screens."""
         self.config_card.update_progress(topo_done, virus_done, config_done)

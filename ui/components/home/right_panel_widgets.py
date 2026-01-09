@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFrame
 from PySide6.QtCore import Qt, Signal
-from ui.utils.base import create_icon, create_qicon
+from ui.utils.base import create_icon
+from PySide6.QtGui import QIcon
 
 class SavedSimulationsWidget(QPushButton):
     clicked_signal = Signal()
@@ -101,14 +102,16 @@ class DocumentationWidget(QFrame):
         
         title = QLabel("Documentation")
         title.setStyleSheet("font-weight: bold; font-size: 16px; color: white;")
-        desc = QLabel("Access the full technical manual, API references, and community guides on GitHub.")
+        desc = QLabel("Find setup instructions, usage examples, and technical details in our GitHub repository.")
         desc.setWordWrap(True)
         desc.setStyleSheet("color: #94a3b8; margin-top: 10px; margin-bottom: 20px;")
-        
+
         gh_btn = QPushButton("  View on GitHub")
-        gh_btn.setIcon(create_qicon("code", 16, "#0f172a"))
+        gh_btn.setIcon(QIcon("ui/assets/icons/github-mark.svg"))
         gh_btn.setStyleSheet("background: white; color: #0f172a; border: none;")
-        
+        gh_btn.clicked.connect(lambda: __import__('webbrowser').open('https://github.com/INARI18/Outbreak_Sandbox'))
+        gh_btn.setCursor(Qt.PointingHandCursor)
+
         layout.addWidget(title)
         layout.addWidget(desc)
         layout.addWidget(gh_btn)

@@ -46,6 +46,7 @@
 └── ui/                                         # Graphical Interface (PySide6)
     ├── app.py                                  # Qt application configuration
     ├── main_window.py                          # Navigation manager
+    ├── theme.py                                #
     ├── components/                             # Reusable widgets
     │   ├── common/                             # Shared components (Buttons, Headers, Dialogs)
     │   ├── home/                               # Home screen specific widgets

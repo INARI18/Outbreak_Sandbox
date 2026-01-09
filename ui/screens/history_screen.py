@@ -9,6 +9,7 @@ from ui.utils.base import NativeBase, create_icon, create_card, create_qicon
 from ui.components.common.header import StandardHeader
 import math
 
+# TODO: implement actual charting
 class MockChartWidget(QFrame):
     def __init__(self, title, color="#0d9488", mode="line"):
         super().__init__()
