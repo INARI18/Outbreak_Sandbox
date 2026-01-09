@@ -2,6 +2,7 @@ from .base import BaseLLMProvider
 import os
 import json
 
+# FIX: ensure that the local provider is working properly
 class LocalProvider(BaseLLMProvider):
     def __init__(self, model_path="microsoft/Phi-3-mini-4k-instruct"):
         self.model_path = model_path

@@ -5,7 +5,6 @@ from PySide6.QtCore import QSettings
 
 from infra.providers.groq_provider import GroqProvider
 from infra.providers.local_provider import LocalProvider
-from infra.providers.mock_provider import MockProvider
 from llm.interface import LLMInterface
 from models.network import Network
 from models.virus import Virus
@@ -69,8 +68,6 @@ class SimulationFactory:
 
         if use_local:
             print("Factory: Configuring Local LLM Provider (Phi-3)")
-            # Check if strictly required to be installed?
-            # For now just instantiate, it handles its own readiness
             client = LocalProvider()
         else:
             api_key = os.getenv("GROQ_API_KEY") or os.getenv("API_KEY")
@@ -85,11 +82,11 @@ class SimulationFactory:
                     client = GroqProvider(api_key)
                     print("Factory: Using Real Groq Client")
                 except Exception as e:
-                    print(f"GroqProvider init failed: {e}. Falling back to Mock.")
-                    client = MockProvider()
+                    print(f"GroqProvider init failed: {e}. No valid LLM provider configured.")
+                    client = None
             else:
-                print("Factory: No API Key found and Local Mode disabled. Using MockClient.")
-                client = MockProvider()
+                print("Factory: No API Key found and Local Mode disabled. No valid LLM provider configured.")
+                client = None
 
         return LLMInterface(client)
 
