@@ -14,7 +14,7 @@ class SavedSimulationsWidget(QPushButton):
             QPushButton {
                 background-color: #0d9488;
                 border: 1px solid #0f766e;
-                border-radius: 12px;
+                border-radius: 20px;
                 text-align: left;
             }
             QPushButton:hover {
@@ -59,7 +59,7 @@ class VirusRepositoryWidget(QPushButton):
             QPushButton {
                 background-color: #1e293b;
                 border: 1px solid #334155;
-                border-radius: 12px;
+                border-radius: 20px;
                 text-align: left;
             }
             QPushButton:hover {
@@ -96,7 +96,7 @@ class VirusRepositoryWidget(QPushButton):
 class DocumentationWidget(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setStyleSheet("background: #1e293b; border-radius: 16px; color: white;")
+        self.setStyleSheet("background: #1e293b; border-radius: 20px; color: white;")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(25, 25, 25, 25)
         

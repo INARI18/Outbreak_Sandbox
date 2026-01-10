@@ -1,7 +1,8 @@
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QPushButton, QWidget, QGraphicsDropShadowEffect
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QWidget, QGraphicsDropShadowEffect
 from PySide6.QtGui import QColor
 from PySide6.QtCore import Qt, Signal
 from ui.utils.base import create_icon
+from ui.components import PrimaryButton
 
 class ConfigurationWorkflowCard(QFrame):
     continue_clicked = Signal()
@@ -12,8 +13,11 @@ class ConfigurationWorkflowCard(QFrame):
         self.setStyleSheet("""
             #card {
                 background: white; 
-                border-radius: 12px; 
+                border-radius: 20px;
                 border: 1px solid #e2e8f0;
+            }
+            QPushButton {
+                border-radius: 20px;
             }
         """)
         
@@ -75,7 +79,8 @@ class ConfigurationWorkflowCard(QFrame):
         
         # Bottom Button
         btn_row = QHBoxLayout()
-        self.continue_btn = QPushButton("Continue")
+        from PySide6.QtWidgets import QPushButton
+        self.continue_btn = QPushButton("Resume")
         self.continue_btn.setFixedSize(100, 32)
         self.continue_btn.setCursor(Qt.PointingHandCursor)
         self.continue_btn.setStyleSheet("""
@@ -83,7 +88,7 @@ class ConfigurationWorkflowCard(QFrame):
                 background: #0f172a;
                 color: white;
                 border: 1px solid #0f172a;
-                border-radius: 6px;
+                border-radius: 16px;
                 font-size: 12px;
                 font-family: 'Space Grotesk';
                 font-weight: bold;
@@ -92,11 +97,16 @@ class ConfigurationWorkflowCard(QFrame):
                 background: #1e293b;
                 border: 1px solid #334155;
             }
+            QPushButton:disabled {
+                background: #cbd5e1;
+                color: white;
+                border: none;
+            }
         """)
+        self.continue_btn.clicked.connect(self.continue_clicked.emit)
         self.continue_btn.clicked.connect(self.continue_clicked.emit)
         btn_row.addWidget(self.continue_btn)
         btn_row.addStretch()
-        
         layout.addSpacing(10)
         layout.addLayout(btn_row)
         
@@ -144,7 +154,6 @@ class ConfigurationWorkflowCard(QFrame):
         self.status_layout.addStretch()
         
         # Button State
-        self.continue_btn.setText("Resume")
         if completed_count == 0:
             self.continue_btn.setEnabled(False)
             self.continue_btn.setStyleSheet("""
@@ -152,7 +161,7 @@ class ConfigurationWorkflowCard(QFrame):
                     background: #cbd5e1;
                     color: white;
                     border: none;
-                    border-radius: 6px;
+                    border-radius: 20px;
                     font-size: 12px;
                     font-family: 'Space Grotesk';
                     font-weight: bold;
@@ -165,7 +174,7 @@ class ConfigurationWorkflowCard(QFrame):
                     background: #0f172a;
                     color: white;
                     border: 1px solid #0f172a;
-                    border-radius: 6px;
+                    border-radius: 20px;
                     font-size: 12px;
                     font-family: 'Space Grotesk';
                     font-weight: bold;

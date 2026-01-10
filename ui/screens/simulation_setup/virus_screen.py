@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from ui.utils.base import create_icon, create_qicon
 from .base_wizard import WizardScreen
+from ui.components import PrimaryButton
 
 class VirusSelectionScreen(WizardScreen):
     def __init__(self):
@@ -102,33 +103,24 @@ class VirusSelectionScreen(WizardScreen):
         self.filter_group.setExclusive(True)
         self.filter_group.buttonClicked.connect(self._on_filter_changed)
 
-        for f in ["All Types", "Ransomware", "Trojan", "Worm", "Botnet"]:
+        from ui.components import PrimaryButton
+        for i, f in enumerate(["All Types", "Ransomware", "Trojan", "Worm", "Botnet"]):
             btn = QPushButton(f)
             btn.setCheckable(True)
-            btn.setProperty("filter_key", f)
-            if f == "All Types": btn.setChecked(True)
             btn.setCursor(Qt.PointingHandCursor)
             btn.setFixedHeight(36)
             btn.setStyleSheet("""
-                QPushButton { 
-                    border-radius: 18px; 
-                    padding: 0 20px; 
-                    border: 1px solid #e2e8f0; 
-                    background: white; 
-                    color: #64748b; 
-                    font-weight: bold;
-                    font-size: 12px;
+                QPushButton {
+                    background: white; border: 1px solid #e2e8f0; border-radius: 18px;
+                    padding: 0 20px; color: #64748b; font-weight: 600; font-size: 13px;
                 }
-                QPushButton:hover {
-                    background: #f8fafc;
-                    color: #334155;
-                }
-                QPushButton:checked { 
-                    background: #0f172a; 
-                    color: white; 
-                    border: 1px solid #0f172a; 
+                QPushButton:hover { border-color: #cbd5e1; color: #475569; }
+                QPushButton:checked {
+                    background: #0f172a; border: 1px solid #0f172a; color: white;
                 }
             """)
+            btn.setProperty("filter_key", f)
+            if i == 0: btn.setChecked(True)
             self.filter_group.addButton(btn)
             fc_lay.addWidget(btn)
             
@@ -142,15 +134,11 @@ class VirusSelectionScreen(WizardScreen):
         carousel_layout.setSpacing(16)
         
         # Left Chevron
-        self.btn_prev = QPushButton()
+        self.btn_prev = PrimaryButton()
         self.btn_prev.setFixedSize(40, 40)
         self.btn_prev.setIcon(create_qicon("chevron_left", 24, "#64748b"))
         self.btn_prev.setCursor(Qt.PointingHandCursor)
-        self.btn_prev.setStyleSheet("""
-            QPushButton { background: white; border: 1px solid #e2e8f0; border-radius: 20px; }
-            QPushButton:hover { background: #f1f5f9; }
-            QPushButton:disabled { background: #f8fafc; border: 1px solid #f1f5f9; color: #cbd5e1; }
-        """)
+        self.btn_prev.setStyleSheet("QPushButton { background: white; border: 1px solid #e2e8f0; border-radius: 20px; } QPushButton:hover { background: #f1f5f9; } QPushButton:disabled { background: #f8fafc; border: 1px solid #f1f5f9; color: #cbd5e1; }")
         self.btn_prev.clicked.connect(self._prev_page)
         
         # Middle Content (The Cards)
@@ -161,15 +149,11 @@ class VirusSelectionScreen(WizardScreen):
         self.card_layout.setAlignment(Qt.AlignCenter)
         
         # Right Chevron
-        self.btn_next = QPushButton()
+        self.btn_next = PrimaryButton()
         self.btn_next.setFixedSize(40, 40)
         self.btn_next.setIcon(create_qicon("chevron_right", 24, "#64748b"))
         self.btn_next.setCursor(Qt.PointingHandCursor)
-        self.btn_next.setStyleSheet("""
-            QPushButton { background: white; border: 1px solid #e2e8f0; border-radius: 20px; }
-            QPushButton:hover { background: #f1f5f9; }
-            QPushButton:disabled { background: #f8fafc; border: 1px solid #f1f5f9; color: #cbd5e1; }
-        """)
+        self.btn_next.setStyleSheet("QPushButton { background: white; border: 1px solid #e2e8f0; border-radius: 20px; } QPushButton:hover { background: #f1f5f9; } QPushButton:disabled { background: #f8fafc; border: 1px solid #f1f5f9; color: #cbd5e1; }")
         self.btn_next.clicked.connect(self._next_page)
         
         carousel_layout.addStretch()
@@ -260,46 +244,45 @@ class VirusSelectionScreen(WizardScreen):
         icon_name = data['icon']
         desc = data['desc']
         vid = data['id']
-        
-        card = QPushButton()
+
+        card = PrimaryButton()
         card.setCheckable(True)
         card.setFixedSize(300, 420)
-        card.setProperty("virus_name", name) 
+        card.setProperty("virus_name", name)
         card.setProperty("virus_id", vid)
         card.setCursor(Qt.PointingHandCursor)
-        
+
         # Updated Style: Border is always #0d9488 (Teal/Green) when checked
         card.setStyleSheet(f"""
-            QPushButton {{ 
-                background: white; 
-                border: 1px solid #e2e8f0; 
-                border-radius: 20px; 
-                text-align: left; 
+            QPushButton {{
+                background: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 20px;
+                text-align: left;
                 padding: 0;
             }}
             QPushButton:hover {{
                 border: 1px solid #cbd5e1;
                 background: #fdfdfd;
             }}
-            QPushButton:checked {{ 
-                border: 3px solid #0d9488; 
+            QPushButton:checked {{
+                border: 3px solid #0d9488;
                 background: #ffffff;
             }}
         """)
-        
+
         vl = QVBoxLayout(card)
         vl.setContentsMargins(24, 24, 24, 24)
         vl.setSpacing(0)
-        
+
         # Header Row: Type Badge + Dot
         hdr = QHBoxLayout()
-        
+
         badge = QLabel(vtype.upper())
-        badge.setStyleSheet(f"background: {color}20; color: {color}; font-weight: 800; font-size: 10px; padding: 4px 8px; border-radius: 6px;")
-        
+        badge.setStyleSheet(f"background: {color}20; color: {color}; font-weight: 800; font-size: 10px; padding: 4px 8px; border-radius: 20px;")
         hdr.addWidget(badge)
         hdr.addStretch()
-        
+
         # Severity Dots
         dots = QHBoxLayout()
         dots.setSpacing(2)
@@ -309,18 +292,20 @@ class VirusSelectionScreen(WizardScreen):
             d.setStyleSheet(f"background: {color if i < (atk/30) else '#e2e8f0'}; border-radius: 3px;")
             dots.addWidget(d)
         hdr.addLayout(dots)
-        
+
         vl.addLayout(hdr)
-        
+
         # Main Icon Area
         vl.addStretch()
         icon_container = QFrame()
         icon_container.setFixedSize(80, 80)
         icon_container.setStyleSheet(f"background: rgba({int(color[1:3],16)}, {int(color[3:5],16)}, {int(color[5:7],16)}, 0.1); border-radius: 40px;")
-        
-        icl = QVBoxLayout(icon_container); icl.setContentsMargins(0,0,0,0); icl.setAlignment(Qt.AlignCenter)
+
+        icl = QVBoxLayout(icon_container)
+        icl.setContentsMargins(0,0,0,0)
+        icl.setAlignment(Qt.AlignCenter)
         icl.addWidget(create_icon(icon_name, 40, color))
-        
+
         vl.addWidget(icon_container, 0, Qt.AlignCenter)
         vl.addStretch()
 
@@ -329,26 +314,26 @@ class VirusSelectionScreen(WizardScreen):
         vn.setAlignment(Qt.AlignCenter)
         vn.setStyleSheet("font-weight: 800; font-size: 18px; color: #1e293b; border: none; background: transparent;")
         vl.addWidget(vn)
-        
+
         vd = QLabel(desc)
         vd.setAlignment(Qt.AlignCenter)
         vd.setWordWrap(True)
         vd.setStyleSheet("color: #64748b; font-size: 12px; margin-top: 8px; margin-bottom: 20px; border: none; background: transparent;")
         vl.addWidget(vd)
-        
+
         # Stats Bars
         stats_box = QWidget()
-        stats_box.setStyleSheet("background: #f8fafc; border-radius: 12px; border: none;")
+        stats_box.setStyleSheet("background: #f8fafc; border-radius: 20px; border: none;")
         sbl = QVBoxLayout(stats_box)
         sbl.setContentsMargins(16, 16, 16, 16)
         sbl.setSpacing(8)
-        
+
         self._add_stat(sbl, "Infectivity", atk, color)
         self._add_stat(sbl, "Speed", spd, color)
         self._add_stat(sbl, "Stealth", stl, color)
-        
+
         vl.addWidget(stats_box)
-        
+
         return card
 
     def _on_virus_selected(self, btn):

@@ -78,7 +78,7 @@ class SettingsDialog(QDialog):
         self.setWindowTitle("Global Configuration")
         self.setFixedSize(500, 450)
         self.setStyleSheet("""
-            QDialog { background: white; border-radius: 12px; }
+            QDialog { background: white; border-radius: 20px; }
             QLabel { font-size: 14px; color: #334155; }
             QLineEdit { 
                 border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px;

@@ -34,7 +34,7 @@ def create_qicon(name: str, size: int = 24, color: str = "#475569") -> QIcon:
 def create_card() -> QFrame:
     f = QFrame()
     f.setObjectName("card")
-    f.setStyleSheet("QFrame#card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; }")
+    f.setStyleSheet("QFrame#card { background: white; border: 1px solid #e2e8f0; border-radius: 20px; }")
     return f
 
 class NativeBase(QWidget):

@@ -13,7 +13,7 @@ class SimulationHubCard(QFrame):
         self.setStyleSheet("""
             #card {
                 background: white; 
-                border-radius: 12px; 
+                border-radius: 20px; 
                 border: 1px solid #e2e8f0;
             }
         """)

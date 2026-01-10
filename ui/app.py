@@ -49,13 +49,13 @@ def main():
     QFrame#card { 
         background: white; 
         border: 1px solid #e2e8f0; 
-        border-radius: 16px; 
+    border-radius: 20px; 
     }
     
     /* Buttons */
     QPushButton { 
         padding: 10px 20px; 
-        border-radius: 12px; 
+    border-radius: 20px; 
         background: white; 
         border: 1px solid #cbd5e1; 
         color: #475569; 
@@ -79,7 +79,7 @@ def main():
     QLineEdit, QSpinBox {
         padding: 8px 12px;
         border: 1px solid #cbd5e1;
-        border-radius: 8px;
+    border-radius: 20px;
         background: #ffffff;
         selection-background-color: #0d9488;
     }
@@ -91,7 +91,7 @@ def main():
     QListWidget, QTableWidget { 
         background: rgba(255,255,255,0.6); 
         border: 1px solid #e2e8f0; 
-        border-radius: 12px;
+    border-radius: 20px;
         outline: none;
     }
     QHeaderView::section {

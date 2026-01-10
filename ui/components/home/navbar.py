@@ -26,8 +26,8 @@ class Navbar(QFrame):
 
         # Settings
         settings_btn = QPushButton()
-        settings_btn.setIcon(create_qicon("settings", 20, "#64748b"))
-        settings_btn.setFixedSize(40, 40)
+        settings_btn.setIcon(create_qicon("settings", 28, "#64748b"))
+        settings_btn.setFixedSize(48, 48)
         settings_btn.setCursor(Qt.PointingHandCursor)
         settings_btn.setStyleSheet("background: transparent; border: none; border-radius: 20px;")
         settings_btn.clicked.connect(self.open_settings)

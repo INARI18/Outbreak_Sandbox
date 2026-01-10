@@ -28,7 +28,7 @@
 │   │   └── virus_repository.py                 # Malware catalog
 │   ├── providers/                              # AI Service Providers
 │   │   ├── groq_provider.py                    # Cloud AI integration (Groq)
-│   │   └── local_provider.py                   # Local Ai integretation ()
+│   │   └── local_provider.py                   # Local Ai integretation (Microsoft Phi-3)
 ├── llm/                                        # AI Business Logic
 │   ├── parsers/                                # Response interpreters (JSON)
 │   ├── prompts/                                # Prompt engineering (txt)
@@ -46,7 +46,7 @@
 └── ui/                                         # Graphical Interface (PySide6)
     ├── app.py                                  # Qt application configuration
     ├── main_window.py                          # Navigation manager
-    ├── theme.py                                #
+    ├── theme.py                                # Global styles
     ├── components/                             # Reusable widgets
     │   ├── common/                             # Shared components (Buttons, Headers, Dialogs)
     │   ├── home/                               # Home screen specific widgets
@@ -68,7 +68,7 @@
 
 ### 1. Cloud AI (Groq API) - _Recommended_
 
-Connects to the ultra-fast Llama 3 models hosted by Groq. Requires an internet connection.
+Connects to the Llama 3 models hosted by Groq. Requires an internet connection.
 
 1.  **Get a Key:** Create a free account at [Groq Cloud](https://console.groq.com/) and generate an API Key.
 2.  **Configuration:**

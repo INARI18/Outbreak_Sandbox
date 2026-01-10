@@ -1,8 +1,9 @@
 from PySide6.QtWidgets import (
-    QLabel, QGridLayout, QPushButton, QVBoxLayout, QFrame, QHBoxLayout, QSlider, QSizePolicy, QButtonGroup
+    QLabel, QGridLayout, QVBoxLayout, QFrame, QHBoxLayout, QSlider, QSizePolicy, QButtonGroup
 )
 from PySide6.QtCore import Qt
 from ui.utils.base import create_icon, create_card
+from ui.components import PrimaryButton
 from .base_wizard import WizardScreen
 
 class TopologySelectionScreen(WizardScreen):
@@ -33,7 +34,7 @@ class TopologySelectionScreen(WizardScreen):
         title.setAlignment(Qt.AlignCenter)
         self.content_layout.addWidget(title)
         
-        subtitle = QLabel("Define the battlefield. The structural layout determines how nodes interact.")
+        subtitle = QLabel("The network structure determines how nodes interact and how threats propagate.")
         subtitle.setStyleSheet("color: #64748b; font-size: 14px; margin-bottom: 24px;")
         subtitle.setAlignment(Qt.AlignCenter)
         self.content_layout.addWidget(subtitle)
@@ -62,7 +63,7 @@ class TopologySelectionScreen(WizardScreen):
         grid.setColumnStretch(0, 1); grid.setColumnStretch(1, 1); grid.setColumnStretch(2, 1) 
 
         for key, name, desc, icon in topologies:
-            btn = QPushButton()
+            btn = PrimaryButton("")
             btn.setCheckable(True)
             btn.setMinimumHeight(180)
             btn.setProperty("topology_key", key)
@@ -72,7 +73,7 @@ class TopologySelectionScreen(WizardScreen):
                 QPushButton {
                     background: white; 
                     border: 1px solid #e2e8f0; 
-                    border-radius: 16px;
+                    border-radius: 20px;
                     text-align: left;
                     padding: 0;
                 }
@@ -85,37 +86,29 @@ class TopologySelectionScreen(WizardScreen):
                     border: 1px solid #cbd5e1;
                 }
             """)
-            
             # Inner Layout
             l = QVBoxLayout(btn)
             l.setContentsMargins(24, 24, 24, 24)
             l.setSpacing(12)
-            
             # Icon Container
             ico_frame = QFrame()
             ico_frame.setFixedSize(48, 48)
-            ico_frame.setStyleSheet("background: #f1f5f9; border-radius: 12px;")
-            
+            ico_frame.setStyleSheet("background: #f1f5f9; border-radius: 20px;")
             ifl = QVBoxLayout(ico_frame)
             ifl.setContentsMargins(0,0,0,0)
             ifl.setAlignment(Qt.AlignCenter)
             ifl.addWidget(create_icon(icon, 24, "#0d9488"))
-            
             t = QLabel(name)
             t.setStyleSheet("font-weight: 800; font-size: 15px; color: #0f172a; border: none; background: transparent;")
-            
             d = QLabel(desc)
             d.setStyleSheet("color: #64748b; font-size: 12px; line-height: 1.4; border: none; background: transparent;")
             d.setWordWrap(True)
-            
             l.addWidget(ico_frame)
             l.addWidget(t)
             l.addWidget(d)
             l.addStretch()
-            
             self.group.addButton(btn)
             grid.addWidget(btn, row, col)
-            
             col += 1
             if col > 2:
                 col = 0
@@ -126,14 +119,14 @@ class TopologySelectionScreen(WizardScreen):
         
         # Scale Slider
         scale_card = create_card()
-        scale_card.setStyleSheet("background: white; border-radius: 16px; border: 1px solid #e2e8f0;")
+        scale_card.setStyleSheet("background: white; border-radius: 20px; border: 1px solid #e2e8f0;")
         sc_layout = QHBoxLayout(scale_card)
         sc_layout.setContentsMargins(30,30,30,30)
         
         # Icon Box
         ib = QFrame()
         ib.setFixedSize(48, 48)
-        ib.setStyleSheet("background: #f0fdf4; border-radius: 12px;")
+        ib.setStyleSheet("background: #f0fdf4; border-radius: 20px;")
         ibl = QVBoxLayout(ib); ibl.setContentsMargins(0,0,0,0); ibl.setAlignment(Qt.AlignCenter)
         ibl.addWidget(create_icon("hub", 24, "#16a34a"))
         

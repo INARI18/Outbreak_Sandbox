@@ -1,8 +1,7 @@
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QPainter, QColor, QFont, QPen, QPainterPath
 from PySide6.QtWidgets import (
-    QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, 
-    QGridLayout, QWidget, QScrollArea, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit,
+    QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QWidget, QScrollArea, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit,
     QButtonGroup, QStackedWidget, QGraphicsDropShadowEffect
 )
 from ui.utils.base import NativeBase, create_icon, create_card, create_qicon
@@ -16,7 +15,7 @@ class MockChartWidget(QFrame):
         self.title = title
         self.base_color = QColor(color)
         self.mode = mode
-        self.setStyleSheet("background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;")
+        self.setStyleSheet("background: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0;")
         self.setMinimumHeight(180)
     
     def paintEvent(self, event):
@@ -74,19 +73,13 @@ class MockChartWidget(QFrame):
     def _draw_bar_chart(self, painter, x, y, w, h):
         count = 8
         bar_w = (w / count) * 0.6
-        gap = (w / count) * 0.4
-        
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(self.base_color)
-        
         for i in range(count):
-            bx = x + (i * (bar_w + gap)) + gap/2
-            # varied heights
-            val = (math.sin(i * 123.45) + 1) / 2 # 0-1 pseudo random
-            val = 0.2 + (val * 0.7)
+            bx = x + i * (w / count) + (w / count - bar_w) / 2
+            val = 0.2 + 0.6 * math.sin(i * 0.7)
             bh = val * h
             by = y + h - bh
-            
+            painter.setBrush(self.base_color)
+            painter.setPen(Qt.NoPen)
             painter.drawRoundedRect(bx, by, bar_w, bh, 4, 4)
 
 class SimulationHistoryProfilesScreen(NativeBase):
@@ -185,7 +178,7 @@ class SimulationHistoryProfilesScreen(NativeBase):
             }
             QLineEdit:focus {
                 border: 1px solid #0d9488;
-            }
+                    b.setStyleSheet("QPushButton { border: 1px solid #e2e8f0; border-radius: 20px; padding: 4px 12px; color: #475569; background: white; } QPushButton:hover { background: #f8fafc; }")
         """)
         top_bar.addWidget(search)
         
@@ -209,7 +202,6 @@ class SimulationHistoryProfilesScreen(NativeBase):
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setSelectionMode(QTableWidget.SingleSelection)
         self.table.setFocusPolicy(Qt.NoFocus)
-        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         
         # Header Style
         header = self.table.horizontalHeader()
@@ -232,7 +224,7 @@ class SimulationHistoryProfilesScreen(NativeBase):
         self.table.setStyleSheet("""
             QTableWidget {
                 background: white;
-                border-radius: 12px;
+                border-radius: 20px;
                 selection-background-color: #f0fdf4;
                 selection-color: #1e293b;
             }
@@ -260,10 +252,11 @@ class SimulationHistoryProfilesScreen(NativeBase):
         pag_layout.addWidget(pag_lbl)
         pag_layout.addStretch()
         
+        from ui.components import PrimaryButton
         for lbl in ["Previous", "Next"]:
-            b = QPushButton(lbl)
+            b = PrimaryButton(lbl)
             b.setCursor(Qt.PointingHandCursor)
-            b.setStyleSheet("QPushButton { border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 12px; color: #475569; background: white; } QPushButton:hover { background: #f8fafc; }")
+            b.setStyleSheet("QPushButton { border-radius: 20px; padding: 4px 12px; color: #475569; background: white; border: 1px solid #e2e8f0; } QPushButton:hover { background: #f8fafc; }")
             pag_layout.addWidget(b)
             
         tc_layout.addLayout(pag_layout)
@@ -287,7 +280,7 @@ class SimulationHistoryProfilesScreen(NativeBase):
         
         # Page 0: Placeholder
         page_placeholder = create_card()
-        page_placeholder.setStyleSheet("background: white; border-radius: 12px; border: 1px dashed #cbd5e1;")
+        page_placeholder.setStyleSheet("background: white; border-radius: 20px; border: 1px dashed #cbd5e1;")
         pp_layout = QVBoxLayout(page_placeholder)
         pp_layout.setAlignment(Qt.AlignCenter)
         pp_layout.setSpacing(10)

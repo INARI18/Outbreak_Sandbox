@@ -25,7 +25,7 @@ class StatsOverlay(QFrame):
     
     def _glass_stat(self, label, val_widget):
         f = QFrame()
-        f.setStyleSheet(f"background: rgba(255,255,255,0.9); border-radius: 12px; border: 1px solid {Theme.BORDER};")
+        f.setStyleSheet(f"background: rgba(255,255,255,0.9); border-radius: 20px; border: 1px solid {Theme.BORDER};")
         v = QVBoxLayout(f)
         v.setContentsMargins(12, 8, 12, 8)
         lbl = QLabel(label)

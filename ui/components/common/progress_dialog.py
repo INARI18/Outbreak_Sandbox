@@ -17,7 +17,7 @@ class ModernProgressDialog(QDialog):
         container.setStyleSheet("""
             QFrame {
                 background: white; 
-                border-radius: 16px; 
+                border-radius: 20px; 
                 border: 1px solid #e2e8f0;
             }
         """)

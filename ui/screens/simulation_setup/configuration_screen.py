@@ -24,7 +24,7 @@ class SimulationConfigurationScreen(WizardScreen):
         card = create_card()
         # Ensure card has a specific background for visibility on white
         # Make texts inside transparent background
-        card.setStyleSheet("QFrame#card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; } QLabel { background: transparent; }")
+        card.setStyleSheet("QFrame#card { background: white; border: 1px solid #e2e8f0; border-radius: 20px; } QLabel { background: transparent; }")
         
         cl = QVBoxLayout(card)
         cl.setContentsMargins(40,40,40,40)
@@ -44,6 +44,10 @@ class SimulationConfigurationScreen(WizardScreen):
         ml.addWidget(lbl)
         ml.addStretch()
         cl.addLayout(ml)
+        # Texto explicativo para Simulation Mode
+        desc_mode = QLabel("Choose how randomness is handled in the environment.")
+        desc_mode.setStyleSheet("color: #64748b; font-size: 12px; background: transparent; margin-bottom: 0px;")
+        cl.addWidget(desc_mode)
         
         mode_box = QHBoxLayout()
         # Mode buttons (must choose one to proceed)
@@ -56,7 +60,7 @@ class SimulationConfigurationScreen(WizardScreen):
             btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             btn.setCursor(Qt.PointingHandCursor)
             btn.setStyleSheet("""
-                QPushButton { border: 1px solid #e2e8f0; border-radius: 12px; text-align: left; padding: 15px; }
+                QPushButton { border: 1px solid #e2e8f0; border-radius: 20px; text-align: left; padding: 15px; }
                 QPushButton:checked { border: 2px solid #0d9488; background: #f0fdf4; }
             """)
             l = QVBoxLayout(btn)
@@ -91,11 +95,13 @@ class SimulationConfigurationScreen(WizardScreen):
         sl.addWidget(lbl2)
         sl.addStretch()
         cl.addLayout(sl)
+        # Texto explicativo para Seed Configuration
+        desc_seed = QLabel("Control the initial state for reproducibility.")
+        desc_seed.setStyleSheet("color: #64748b; font-size: 12px; background: transparent; margin-bottom: 0px;")
+        cl.addWidget(desc_seed)
 
         self.seed_input = QLineEdit("84592")
-        # Style input and clearly show disabled state via :disabled selector
-        self.seed_input.setStyleSheet("QLineEdit { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; font-family: monospace; } QLineEdit:disabled { background: #f1f5f9; color: #94a3b8; }")
-        # By default seed input is disabled until Deterministic mode is selected
+        self.seed_input.setStyleSheet("QLineEdit { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 10px; font-family: monospace; } QLineEdit:disabled { background: #f1f5f9; color: #94a3b8; }")
         self.seed_input.setEnabled(False)
         self.seed_input.setPlaceholderText("Random Seed")
         self.seed_input.textChanged.connect(self.on_interaction)
@@ -153,9 +159,13 @@ class SimulationConfigurationScreen(WizardScreen):
         el.addWidget(lbl3)
         el.addStretch()
         cl.addLayout(el)
+        # Texto explicativo para Step-by-step
+        desc_exec = QLabel("Enable step-by-step control for detailed simulation analysis.")
+        desc_exec.setStyleSheet("color: #64748b; font-size: 12px; background: transparent; margin-bottom: 0px;")
+        cl.addWidget(desc_exec)
         
         step_box = QFrame()
-        step_box.setStyleSheet("background: #f8fafc; border-radius: 8px; padding: 10px;")
+        step_box.setStyleSheet("background: #f8fafc; border-radius: 20px; padding: 10px;")
         sbl = QHBoxLayout(step_box)
         sbl.addWidget(create_icon("speed", 20, "#64748b"))
         tl = QVBoxLayout()

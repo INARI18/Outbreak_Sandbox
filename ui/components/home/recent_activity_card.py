@@ -18,7 +18,7 @@ class RecentActivityCard(QFrame):
         self.setStyleSheet("""
             #card {
                 background: white; 
-                border-radius: 12px; 
+                border-radius: 20px; 
                 border: 1px solid #e2e8f0;
             }
         """)
@@ -90,7 +90,7 @@ class RecentActivityCard(QFrame):
 
     def _render_placeholder(self):
         placeholder = QFrame()
-        placeholder.setStyleSheet("background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;")
+        placeholder.setStyleSheet("background: #f8fafc; border-radius: 20px; border: 1px dashed #cbd5e1;")
         pl = QVBoxLayout(placeholder)
         pl.setAlignment(Qt.AlignCenter)
         pl.setSpacing(10)

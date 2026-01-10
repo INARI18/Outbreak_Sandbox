@@ -53,13 +53,13 @@ class StandardHeader(QFrame):
 
         if show_settings_btn:
              settings_btn = QPushButton()
-             settings_btn.setIcon(create_qicon("settings", 20, "#64748b"))
-             settings_btn.setFixedSize(40, 40)
+             settings_btn.setIcon(create_qicon("settings", 28, "#64748b"))
+             settings_btn.setFixedSize(48, 48)
              settings_btn.setCursor(Qt.PointingHandCursor)
              settings_btn.setStyleSheet("""
-                QPushButton { background: transparent; border: none; border-radius: 20px; }
-                QPushButton:hover { background: #f1f5f9; }
-             """)
+                QPushButton { border: 1px solid #e2e8f0; background: white; border-radius: 20px; }
+                QPushButton:hover { background: #f8fafc; border-color: #cbd5e1; }
+            """)
              settings_btn.clicked.connect(self.open_settings)
              layout.addWidget(settings_btn)
 
@@ -70,7 +70,7 @@ class StandardHeader(QFrame):
             dash_btn.setCursor(Qt.PointingHandCursor)
             dash_btn.setToolTip("Go to Dashboard")
             dash_btn.setStyleSheet("""
-                QPushButton { border: 1px solid #e2e8f0; background: white; border-radius: 8px; }
+                QPushButton { border: 1px solid #e2e8f0; background: white; border-radius: 20px; }
                 QPushButton:hover { background: #f8fafc; border-color: #cbd5e1; }
             """)
             dash_btn.clicked.connect(self.dashboard_requested.emit)

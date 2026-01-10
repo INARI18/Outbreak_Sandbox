@@ -15,7 +15,7 @@ class PrimaryButton(QPushButton):
                 background-color: {Theme.PRIMARY};
                 color: white;
                 border: 1px solid #0f766e;
-                border-radius: 12px;
+                border-radius: 20px;
                 font-family: 'Space Grotesk';
                 font-weight: bold;
                 font-size: 16px;
