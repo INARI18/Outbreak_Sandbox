@@ -144,9 +144,13 @@ class SimulationExecutionDashboardScreen(NativeBase):
                 r.addWidget(ico)
             return r
 
-        nc_lay.addLayout(field("IP Address", "192.168.1.45"))
-        nc_lay.addLayout(field("Infection Source", "Node #401", True))
-        nc_lay.addLayout(field("Vulnerability", "SMBv1 (MS17-010)"))
+        # Campos dinâmicos: nível de segurança, vizinhos, origem da infecção
+        self.n_field_security = field("Security Level", "—")
+        self.n_field_neighbors = field("Neighbors", "—")
+        self.n_field_origin = field("Infection Source", "—", True)
+        nc_lay.addLayout(self.n_field_security)
+        nc_lay.addLayout(self.n_field_neighbors)
+        nc_lay.addLayout(self.n_field_origin)
         
         nc_lay.addWidget(QLabel("<hr style='color:#f1f5f9'>"))
         
@@ -215,18 +219,18 @@ class SimulationExecutionDashboardScreen(NativeBase):
         self.engine = engine
         self._setup_initial_state()
         self.update_ai_badge() # Force update badge when engine is set
-        
+
         virus_name = engine.virus.name
         network_type = engine.topology_type if hasattr(engine, 'topology_type') else "Network"
         self.header.set_subtitle(f"Scenario: {virus_name} • {network_type}")
-        
+
         # Update node count
         total = len(engine.network.nodes)
-        self.lbl_nodes_val.setText(f"{total:,}")
-        
+        self.stats_overlay.lbl_nodes_val.setText(f"{total:,}")
+
         # Initialize Visualizer
         self.visualizer.set_network(engine.network)
-        
+
         self.update_stats_ui()
 
     def _confirm_exit_to_dashboard(self):
@@ -304,7 +308,7 @@ class SimulationExecutionDashboardScreen(NativeBase):
             # Update play button and live badge
             try:
                 self.play_btn.setText(create_icon("play_circle", 32).text())
-                self.live_badge.setText(" READY ")
+                self.decision_log.live_badge.setText(" READY ")
                 self.live_badge.setStyleSheet("background: #f1f5f9; color: #64748b; font-size: 10px; font-weight: bold; border-radius: 4px; padding: 2px;")
             except Exception:
                 pass
@@ -321,14 +325,14 @@ class SimulationExecutionDashboardScreen(NativeBase):
             self.timer.stop()
             self.is_running = False
             self.play_btn.setText(create_icon("play_circle", 32).text())
-            self.live_badge.setText(" PAUSED ")
-            self.live_badge.setStyleSheet("background: #fff1f2; color: #be123c; font-size: 10px; font-weight: bold; border-radius: 4px; padding: 2px;")
+            self.decision_log.live_badge.setText(" PAUSED ")
+            self.decision_log.live_badge.set_theme("red")
         else:
             self.timer.start(500) # 500ms per step
             self.is_running = True
             self.play_btn.setText(create_icon("pause_circle", 32).text())
-            self.live_badge.setText(" LIVE ")
-            self.live_badge.setStyleSheet("background: #ecfdf5; color: #059669; font-size: 10px; font-weight: bold; border-radius: 4px; padding: 2px;")
+            self.decision_log.live_badge.setText(" LIVE ")
+            self.decision_log.live_badge.set_theme("green")
 
     def run_step(self):
         if not self.engine:
@@ -391,7 +395,8 @@ class SimulationExecutionDashboardScreen(NativeBase):
                 title = "Attack Blocked"
                 self.add_decision(f"Step {step_num}", title, reason, icon, color)
 
-        self.decision_list.scrollToBottom()
+
+        self.decision_log.decision_list.scrollToBottom()
 
         # Check stop conditions
         should_stop, stop_reason = check_stop(self.engine)
@@ -399,8 +404,8 @@ class SimulationExecutionDashboardScreen(NativeBase):
             self.timer.stop()
             self.is_running = False
             self.play_btn.setText(create_icon("play_circle", 32).text())
-            self.live_badge.setText(" FINISHED ")
-            self.live_badge.setStyleSheet("background: #dcfce7; color: #166534; font-size: 10px; font-weight: bold; border-radius: 4px; padding: 2px;")
+            self.decision_log.live_badge.setText(" FINISHED ")
+            self.decision_log.live_badge.set_theme("green")
             self.add_event_item('info', f"Simulation Finished: {stop_reason}")
             self._save_activity()
 
@@ -416,8 +421,8 @@ class SimulationExecutionDashboardScreen(NativeBase):
         else:
             pct = 0
             
-        self.lbl_step_val.setText(str(step))
-        self.lbl_infection_val.setText(f"{pct:.1f}%")
+        self.stats_overlay.lbl_step_val.setText(str(step))
+        self.stats_overlay.lbl_infection_val.setText(f"{pct:.1f}%")
 
     def add_event(self, text: str, color: str = "#334155"):
         # Backwards-compatible simple API, maps to rich item
@@ -524,7 +529,7 @@ class SimulationExecutionDashboardScreen(NativeBase):
         self.event_list.scrollToBottom()
 
     def update_node_inspector(self, node):
-        # Update right-hand inspector with node details
+        # Atualiza o inspector com informações dinâmicas
         self.n_title.setText(f"Node #{node.id}")
         self.n_sub.setText(node.name)
         # status badge
@@ -537,6 +542,30 @@ class SimulationExecutionDashboardScreen(NativeBase):
         else:
             self.node_status_badge.setText("HEALTHY")
             self.node_status_badge.setStyleSheet("background: #ecfdf5; color: #059669; font-size: 10px; font-weight: bold; border-radius: 4px; padding: 2px 4px;")
+
+        # Nível de segurança
+        self.n_field_security.itemAt(2).widget().setText(f"{node.security_level:.2f}")
+
+        # Vizinhos
+        vizinhos = ', '.join([str(nid) for nid in node.connected_nodes]) if node.connected_nodes else '—'
+        self.n_field_neighbors.itemAt(2).widget().setText(vizinhos)
+
+        # Origem da infecção (busca simples no histórico do engine)
+        origem = '—'
+        if self.engine and hasattr(self.engine, 'history'):
+            for step in reversed(self.engine.history):
+                for n in step.get('nodes_snapshot', []):
+                    if n['id'] == node.id and n['status'] == 'infected':
+                        # Tenta buscar source_node do step
+                        origem = step.get('source_node', '—')
+                        if origem and origem != node.id:
+                            origem = f"Node #{origem}"
+                        else:
+                            origem = '—'
+                        break
+                if origem != '—':
+                    break
+        self.n_field_origin.itemAt(2).widget().setText(origem)
 
     def add_decision(self, step, title, desc, icon_name, color="#0d9488"):
         bg_map = {
@@ -634,8 +663,8 @@ class SimulationExecutionDashboardScreen(NativeBase):
         widget.setFixedWidth(255)
         
         item.setSizeHint(widget.sizeHint())
-        self.decision_list.addItem(item)
-        self.decision_list.setItemWidget(item, widget)
+        self.decision_log.decision_list.addItem(item)
+        self.decision_log.decision_list.setItemWidget(item, widget)
         widget.adjustSize()
         item.setSizeHint(widget.sizeHint())
 
@@ -670,19 +699,15 @@ class SimulationExecutionDashboardScreen(NativeBase):
         use_local = settings.value("use_local_llm", False, type=bool)
         
         if use_local:
-            self.ai_mode_badge.setText("LOCAL AI")
-            self.ai_mode_badge.set_theme("yellow")
+            self.decision_log.set_ai_mode("LOCAL AI", theme="yellow")
         else:
-            self.ai_mode_badge.setText("CLOUD AI")
-            self.ai_mode_badge.set_theme("blue") 
+            self.decision_log.set_ai_mode("CLOUD AI", theme="blue")
 
     def _setup_initial_state(self):
-        self.decision_list.clear()
-        self.event_list.clear() # If event_list exists, otherwise remove this line.
-        # Checking file content earlier, self.event_list exists.
-        
+        self.decision_log.decision_list.clear()
+        self.event_list.clear()
         self.is_running = False
         self.timer.stop()
         self.play_btn.setText(create_icon("play_circle", 32).text())
-        self.live_badge.setText(" READY ")
-        self.live_badge.setStyleSheet("background: #f1f5f9; color: #64748b; font-size: 10px; font-weight: bold; border-radius: 4px; padding: 2px;")
+        self.decision_log.live_badge.setText(" READY ")
+        self.decision_log.live_badge.set_theme("gray")
